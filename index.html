@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Spectrum_qr | Industrial Encoder</title>
+    
+    <!-- Библиотеки -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    
+    <!-- Шрифты -->
+    <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --brass: #b8860b;
+            --brass-light: #d4af37;
+            --copper: #b87333;
+            --steel-dark: #1a1a1a;
+            --steel-mid: #2b2b2b;
+            --r-channel: #ff3333;
+            --g-channel: #33ff33;
+            --b-channel: #3399ff;
+        }
+
+        body {
+            font-family: 'Share Tech Mono', monospace;
+            background-color: #0e0e0e;
+            color: #e0e0e0;
+            overflow-x: hidden;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        /* Metal Texture Background */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: 
+                radial-gradient(circle at 50% 50%, #2a2a2a 0%, #0e0e0e 100%),
+                url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.1'/%3E%3C/svg%3E");
+            opacity: 0.6;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .app-container {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Typography */
+        .font-stencil { font-family: 'Black Ops One', cursive; }
+        .font-data { font-family: 'Share Tech Mono', monospace; }
+
+        /* Industrial Components */
+        .rivet {
+            width: 10px; height: 10px;
+            background: radial-gradient(circle at 30% 30%, #888, #333);
+            border-radius: 50%;
+            box-shadow: inset 0 1px 2px rgba(255,255,255,0.3), 0 2px 4px rgba(0,0,0,0.8);
+        }
+
+        .brass-plate {
+            background: linear-gradient(135deg, #3e2a1a 0%, #2a1a0a 100%);
+            border: 2px solid var(--brass);
+            box-shadow: 
+                inset 0 0 10px rgba(0,0,0,0.8),
+                0 5px 15px rgba(0,0,0,0.5),
+                0 0 0 1px rgba(0,0,0,0.8);
+        }
+
+        .engraved-text {
+            color: transparent;
+            background: linear-gradient(180deg, rgba(255,255,255,0.1) 0%, rgba(0,0,0,0.8) 100%);
+            -webkit-background-clip: text;
+            text-shadow: 0px 1px 1px rgba(0,0,0,0.9);
+        }
+
+        .industrial-input {
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid #444;
+            color: var(--brass-light);
+            transition: all 0.3s;
+        }
+        .industrial-input:focus {
+            outline: none;
+            border-color: var(--brass);
+            box-shadow: 0 0 10px rgba(184, 134, 11, 0.2);
+        }
+
+        /* Viewport */
+        .viewport-frame {
+            border: 4px solid #333;
+            box-shadow: inset 0 0 30px #000;
+            background: #000;
+            position: relative;
+        }
+
+        /* Buttons */
+        .btn-industrial {
+            background: linear-gradient(180deg, #333 0%, #111 100%);
+            border: 2px solid #555;
+            color: #aaa;
+            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.1);
+            transition: all 0.1s;
+        }
+        .btn-industrial:active {
+            transform: translateY(2px);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.9);
+            background: #111;
+            color: var(--brass-light);
+        }
+
+        /* Schematic */
+        .schematic-line { stroke: #555; stroke-width: 2; fill: none; }
+        
+        /* Responsive Layout Modifiers */
+        @media (max-width: 768px) {
+            .hide-mobile { display: none; }
+            .show-mobile { display: block; }
+            
+            /* Stack main content vertically */
+            .main-layout {
+                flex-direction: column !important;
+            }
+            
+            /* Reorder grid elements for mobile */
+            .order-1-mobile { order: 1; } /* Preview */
+            .order-2-mobile { order: 2; } /* Inputs */
+            
+            .input-container {
+                flex-direction: row !important;
+                width: 100% !important;
+                gap: 8px;
+            }
+            .input-container textarea {
+                height: 60px !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container p-2 gap-2">
+        
+        <!-- HEADER -->
+        <header class="brass-plate rounded-md p-2 flex items-center justify-between relative h-auto md:h-16">
+            <!-- Rivets -->
+            <div class="rivet absolute top-2 left-2"></div>
+            <div class="rivet absolute top-2 right-2"></div>
+            <div class="rivet absolute bottom-2 left-2"></div>
+            <div class="rivet absolute bottom-2 right-2"></div>
+
+            <!-- Left: Logo -->
+            <div class="w-1/3">
+                <h1 class="font-stencil text-xl md:text-2xl text-brass-light tracking-wider engraved-text">Spectrum_qr</h1>
+            </div>
+
+            <!-- Center: Schematic (Simplified on Mobile) -->
+            <div class="flex-1 flex items-center justify-center h-full">
+                <!-- Desktop SVG -->
+                <svg class="w-40 h-10 hide-mobile" viewBox="0 0 200 40">
+                    <path d="M10 20 L60 20 L70 10 L130 10 L140 20 L190 20" class="schematic-line" stroke-dasharray="4,2"/>
+                    <circle cx="10" cy="20" r="3" fill="var(--r-channel)"/>
+                    <circle cx="10" cy="30" r="3" fill="var(--g-channel)" class="hide-mobile"/>
+                    <circle cx="10" cy="40" r="3" fill="var(--b-channel)" class="hide-mobile"/>
+                    <rect x="80" y="5" width="40" height="30" rx="2" fill="none" stroke="#555"/>
+                    <text x="100" y="23" text-anchor="middle" fill="#555" font-size="6">MUX</text>
+                </svg>
+                <!-- Mobile Icons -->
+                <div class="flex gap-4 show-mobile hide">
+                    <span class="text-xl" style="color: var(--r-channel)">⬤</span>
+                    <span class="text-xl" style="color: var(--g-channel)">⬤</span>
+                    <span class="text-xl" style="color: var(--b-channel)">⬤</span>
+                </div>
+            </div>
+
+            <!-- Right: Slogan -->
+            <div class="w-1/3 text-right hide-mobile">
+                <span class="text-[10px] text-zinc-500 tracking-widest">Многоканальная кодировка данных</span>
+            </div>
+        </header>
+
+        <!-- MAIN LAYOUT -->
+        <main class="flex-1 generator-panel rounded-md flex flex-col md:flex-row p-2 gap-4 main-layout relative overflow-hidden">
+            
+            <!-- LEFT: Inputs (Order 2 on Mobile) -->
+            <div class="w-full md:w-1/4 flex flex-col gap-2 order-2-mobile md:order-1 input-container">
+                <div class="flex-1 flex flex-col">
+                    <label class="text-[10px] text-zinc-500 mb-1 flex justify-between">
+                        <span>CHANNEL RED</span>
+                        <span id="stat-r" class="text-red-400 hidden">LOCKED</span>
+                    </label>
+                    <textarea id="r-text" class="industrial-input rounded p-2 flex-1 font-data text-xs h-20 md:h-auto" placeholder="DATA..."></textarea>
+                </div>
+                <div class="flex-1 flex flex-col">
+                    <label class="text-[10px] text-zinc-500 mb-1 flex justify-between">
+                        <span>CHANNEL GREEN</span>
+                        <span id="stat-g" class="text-green-400 hidden">LOCKED</span>
+                    </label>
+                    <textarea id="g-text" class="industrial-input rounded p-2 flex-1 font-data text-xs h-20 md:h-auto" placeholder="DATA..."></textarea>
+                </div>
+                <div class="flex-1 flex flex-col">
+                    <label class="text-[10px] text-zinc-500 mb-1 flex justify-between">
+                        <span>CHANNEL BLUE</span>
+                        <span id="stat-b" class="text-blue-400 hidden">LOCKED</span>
+                    </label>
+                    <textarea id="b-text" class="industrial-input rounded p-2 flex-1 font-data text-xs h-20 md:h-auto" placeholder="DATA..."></textarea>
+                </div>
+            </div>
+
+            <!-- CENTER: Preview (Order 1 on Mobile) -->
+            <div class="flex-1 flex flex-col items-center justify-center gap-4 order-1-mobile md:order-2">
+                <div class="viewport-frame w-full max-w-xs aspect-square rounded relative">
+                    <canvas id="qr-main" width="512" height="512" class="w-full h-full"></canvas>
+                    <video id="video" class="absolute inset-0 w-full h-full object-cover hidden z-10" playsinline></video>
+                    <canvas id="freeze-frame" class="absolute inset-0 w-full h-full object-cover hidden z-12"></canvas>
+                    
+                    <div id="scan-hud" class="absolute inset-0 border-4 border-transparent pointer-events-none transition-all z-20 flex items-center justify-center">
+                         <div class="text-white text-[10px] bg-black/50 px-2 py-1 opacity-0 transition-opacity" id="scan-status">SCANNING...</div>
+                    </div>
+                </div>
+
+                <!-- Buttons Area -->
+                <div class="w-full max-w-xs flex gap-2">
+                    <!-- Scan Button: Always Visible -->
+                    <button id="btn-scan" onclick="initScanMode()" class="btn-industrial py-2 rounded font-stencil text-sm flex-1">
+                        SCAN
+                    </button>
+                    
+                    <!-- Save Button: Hidden by default, logic in JS -->
+                    <button id="btn-save" onclick="saveQR()" class="btn-industrial py-2 rounded font-stencil text-sm flex-1 hidden border-green-900 text-green-400">
+                        SAVE
+                    </button>
+                    
+                    <!-- Camera & File buttons (revealed on Scan init) -->
+                    <button id="btn-cam" onclick="startCamera()" class="btn-industrial py-2 rounded font-stencil text-xs flex-1 hidden">
+                        CAM
+                    </button>
+                    <button id="btn-file" onclick="document.getElementById('file-input').click()" class="btn-industrial py-2 rounded font-stencil text-xs flex-1 hidden">
+                        FILE
+                    </button>
+                </div>
+                <input type="file" id="file-input" accept="image/*" class="hidden" onchange="handleFile(event)">
+            </div>
+
+            <!-- RIGHT: Instructions (Hidden on Mobile) -->
+            <aside class="w-1/4 hide-mobile flex flex-col justify-center order-3">
+                <div class="brass-plate p-4 rounded text-xs space-y-3 bg-black/30">
+                    <h3 class="font-stencil text-brass-light text-sm border-b border-zinc-700 pb-1 mb-2">INSTRUCTIONS</h3>
+                    <p>1. Введите текст в поля R, G, B слева. Код сформируется автоматически.</p>
+                    <p>2. Нажмите <span class="text-brass-light">SCAN</span> для запуска сканера.</p>
+                    <p>3. Наведите камеру на цветной QR-код.</p>
+                    <p>4. Данные автоматически распределятся по каналам.</p>
+                    <p class="text-zinc-500 text-[10px] pt-2 border-t border-zinc-800 mt-2">Кнопка сохранения появится при заполнении всех каналов.</p>
+                </div>
+            </aside>
+        </main>
+    </div>
+
+    <script>
+        // === 1. STATE & CONFIG ===
+        const state = {
+            scanning: false,
+            locked: { r: false, g: false, b: false },
+            results: { r: null, g: null, b: null },
+            
+            activeSearch: false,
+            standardFailCount: 0,
+            AUTO_TRIGGER_THRESHOLD: 45,
+            
+            time: 0,
+            channelIndex: 0,
+            
+            config: {
+                R: { k1: 0.10, k2: 0.20 },
+                G: { k1: 0.18, k2: 0.33 },
+                B: { k1: 0.05, k2: 0.13 }
+            }
+        };
+
+        const els = {
+            r: document.getElementById('r-text'), g: document.getElementById('g-text'), b: document.getElementById('b-text'),
+            main: document.getElementById('qr-main'),
+            video: document.getElementById('video'), freeze: document.getElementById('freeze-frame'),
+            ctx: document.getElementById('qr-main').getContext('2d', { willReadFrequently: true }),
+            fCtx: document.getElementById('freeze-frame').getContext('2d', { willReadFrequently: true }),
+            hud: document.getElementById('scan-hud'),
+            status: document.getElementById('scan-status'),
+            statR: document.getElementById('stat-r'), statG: document.getElementById('stat-g'), statB: document.getElementById('stat-b'),
+            btnSave: document.getElementById('btn-save'),
+            btnScan: document.getElementById('btn-scan'),
+            btnCam: document.getElementById('btn-cam'),
+            btnFile: document.getElementById('btn-file')
+        };
+
+        // === 2. ALGORITHMS ===
+        function applyBradleyStandard(imgData, chIdx) {
+            const w = imgData.width, h = imgData.height;
+            const input = imgData.data;
+            const output = new Uint8ClampedArray(w * h * 4);
+            const intImg = new Int32Array(w * h);
+            const s = Math.floor(w / 8), t = 15;
+
+            for (let y = 0; y < h; y++) {
+                let sum = 0;
+                for (let x = 0; x < w; x++) {
+                    sum += input[(y * w + x) * 4 + chIdx];
+                    intImg[y * w + x] = (y > 0 ? intImg[(y - 1) * w + x] : 0) + sum;
+                }
+            }
+
+            for (let y = 0; y < h; y++) {
+                for (let x = 0; x < w; x++) {
+                    const x1 = Math.max(x - s, 0), x2 = Math.min(x + s, w - 1);
+                    const y1 = Math.max(y - s, 0), y2 = Math.min(y + s, h - 1);
+                    const count = (x2 - x1) * (y2 - y1);
+                    const sum = intImg[y2 * w + x2] - intImg[y1 * w + x2] - intImg[y2 * w + x1] + intImg[y1 * w + x1];
+                    const val = input[(y * w + x) * 4 + chIdx];
+                    const res = (val * count < sum * (100 - t) / 100) ? 0 : 255;
+                    const idx = (y * w + x) * 4;
+                    output[idx] = output[idx+1] = output[idx+2] = res; output[idx+3] = 255;
+                }
+            }
+            return new ImageData(output, w, h);
+        }
+
+        function applySCIMath(imgData, ch, cfg) {
+            const d = imgData.data;
+            for (let i = 0; i < d.length; i += 4) {
+                let r = d[i], g = d[i+1], b = d[i+2];
+                let target, n1, n2;
+                
+                if (ch === 'R') { target = r; n1 = g; n2 = b; }
+                else if (ch === 'G') { target = g; n1 = r; n2 = b; }
+                else { target = b; n1 = r; n2 = g; }
+
+                let res = (target - (n1 * cfg.k1 + n2 * cfg.k2)) * cfg.gain + cfg.offset;
+                res = Math.max(0, Math.min(255, res));
+                d[i] = res; d[i+1] = res; d[i+2] = res; d[i+3] = 255;
+            }
+        }
+
+        function getOscParam(t, period, min, max) {
+            const cycle = t % period;
+            const half = period / 2;
+            const pos = (cycle < half) ? cycle / half : (period - cycle) / half;
+            return min + pos * (max - min);
+        }
+
+        // === 3. GENERATION & UI UPDATE ===
+        function generateQR() {
+            const texts = [els.r.value, els.g.value, els.b.value];
+            
+            els.ctx.fillStyle = "#000"; 
+            els.ctx.fillRect(0,0,512,512);
+            
+            // UI Logic: Show Save button only if all inputs have text
+            checkSaveButtonVisibility();
+
+            if (!texts.some(t => t.trim())) return;
+
+            let maxVer = 1;
+            texts.forEach(t => {
+                if(!t.trim()) return;
+                const tmp = qrcode(0, 'M'); 
+                tmp.addData(unescape(encodeURIComponent(t))); tmp.make();
+                const v = Math.floor((tmp.getModuleCount() - 17) / 4);
+                if (v > maxVer) maxVer = v;
+            });
+            
+            els.ctx.globalCompositeOperation = "lighten";
+            
+            texts.forEach((text, i) => {
+                if(!text.trim()) return;
+                const qr = qrcode(maxVer, 'M'); 
+                qr.addData(unescape(encodeURIComponent(text))); qr.make();
+                const mod = 512 / qr.getModuleCount();
+                
+                els.ctx.fillStyle = i === 0 ? "#FF3333" : (i === 1 ? "#33FF33" : "#3399FF");
+                
+                for (let r = 0; r < qr.getModuleCount(); r++) {
+                    for (let c = 0; c < qr.getModuleCount(); c++) {
+                        if (qr.isDark(r, c)) els.ctx.fillRect(c * mod, r * mod, mod, mod);
+                    }
+                }
+            });
+            els.ctx.globalCompositeOperation = "source-over";
+        }
+
+        function checkSaveButtonVisibility() {
+            // Show Save button ONLY if all 3 inputs are not empty
+            if (els.r.value.trim() && els.g.value.trim() && els.b.value.trim()) {
+                els.btnSave.classList.remove('hidden');
+            } else {
+                els.btnSave.classList.add('hidden');
+            }
+        }
+
+        // === 4. SCANNING LOOP ===
+        function processLoop() {
+            if (!state.scanning) return;
+
+            let sourceCopy = null;
+            if (els.video.readyState === els.video.HAVE_ENOUGH_DATA) {
+                els.ctx.drawImage(els.video, 0, 0, 512, 512);
+                sourceCopy = els.ctx.getImageData(0, 0, 512, 512);
+            } else if (!els.freeze.classList.contains('hidden')) {
+                sourceCopy = els.fCtx.getImageData(0, 0, 512, 512);
+            }
+
+            if (sourceCopy) {
+                if (state.standardFailCount > state.AUTO_TRIGGER_THRESHOLD) {
+                    if (!state.activeSearch) {
+                        state.activeSearch = true;
+                        els.status.textContent = "ACTIVE SEARCH...";
+                        els.hud.classList.add('gauge-active');
+                    }
+                }
+
+                const channels = ['R', 'G', 'B'];
+                const activeChannels = channels.filter(ch => !state.locked[ch.toLowerCase()]);
+                
+                if (activeChannels.length > 0) {
+                    const ch = activeChannels[state.channelIndex % activeChannels.length];
+                    state.channelIndex++;
+                    
+                    const baseCfg = state.config[ch];
+                    let foundInFrame = false;
+
+                    if (state.activeSearch) {
+                        state.time++; 
+                        const gain = getOscParam(state.time, 100, 0.5, 3.5);
+                        const offset = getOscParam(state.time, 250, -80, 0);
+                        const cfg = { ...baseCfg, gain, offset };
+
+                        let workData = new ImageData(new Uint8ClampedArray(sourceCopy.data), 512, 512);
+                        applySCIMath(workData, ch, cfg);
+                        let mono = applyBradleyStandard(workData, 0);
+                        
+                        const code = jsQR(mono.data, 512, 512, { inversionAttempts: "attemptBoth" });
+                        
+                        if (code) {
+                            lockChannel(ch, code.data);
+                            foundInFrame = true;
+                        }
+                        
+                        if (!foundInFrame) els.ctx.putImageData(workData, 0, 0);
+                    } else {
+                        state.standardFailCount++;
+                        const idx = channels.indexOf(ch);
+                        let mono = applyBradleyStandard(sourceCopy, idx);
+                        const code = jsQR(mono.data, 512, 512, { inversionAttempts: "attemptBoth" });
+                        
+                        if (code) {
+                            lockChannel(ch, code.data);
+                            foundInFrame = true;
+                            state.standardFailCount = 0; 
+                        }
+                        if (!foundInFrame) els.ctx.putImageData(sourceCopy, 0, 0);
+                    }
+                }
+            }
+            requestAnimationFrame(processLoop);
+        }
+
+        // === 5. UI & CONTROL ===
+        function lockChannel(ch, data) {
+            const key = ch.toLowerCase();
+            if (state.locked[key]) return;
+            
+            state.locked[key] = true;
+            state.results[key] = data;
+            
+            els.hud.style.borderColor = key === 'r' ? 'var(--r-channel)' : (key === 'g' ? 'var(--g-channel)' : 'var(--b-channel)');
+            setTimeout(() => els.hud.style.borderColor = 'transparent', 200);
+            
+            els[key].value = data;
+            els['stat'+ch].classList.remove('hidden');
+            
+            checkSaveButtonVisibility(); // Update save button state
+
+            if (state.locked.r && state.locked.g && state.locked.b) {
+                stopScanning();
+                generateQR();
+            }
+        }
+
+        function initScanMode() {
+            // Do not reset inputs completely if user just wants to scan?
+            // Let's reset only state flags and locked status
+            state.locked = {r:false, g:false, b:false};
+            state.results = {r:null, g:null, b:null};
+            els.r.value = ""; els.g.value = ""; els.b.value = "";
+            els.statR.classList.add('hidden'); els.statG.classList.add('hidden'); els.statB.classList.add('hidden');
+            checkSaveButtonVisibility();
+            
+            els.btnScan.classList.add('hidden');
+            els.btnCam.classList.remove('hidden');
+            els.btnFile.classList.remove('hidden');
+            els.status.style.opacity = '1';
+            els.status.textContent = "READY";
+        }
+
+        async function startCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+                els.video.srcObject = stream;
+                els.video.play();
+                els.video.classList.remove('hidden');
+                els.freeze.classList.add('hidden');
+
+                state.scanning = true;
+                state.standardFailCount = 0;
+                state.activeSearch = false;
+                
+                els.status.textContent = "SCANNING...";
+                
+                requestAnimationFrame(processLoop);
+            } catch(e) { alert("Camera Error: " + e); }
+        }
+
+        function stopScanning() {
+            state.scanning = false;
+            if (els.video.srcObject) els.video.srcObject.getTracks().forEach(t => t.stop());
+            els.video.classList.add('hidden');
+            els.hud.classList.remove('gauge-active');
+            els.status.style.opacity = '0';
+            
+            els.btnScan.classList.remove('hidden');
+            els.btnCam.classList.add('hidden');
+            els.btnFile.classList.add('hidden');
+        }
+
+        function handleFile(e) {
+            const file = e.target.files[0]; 
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                const img = new Image();
+                img.onload = () => {
+                    els.freeze.width = 512; els.freeze.height = 512;
+                    const s = Math.min(img.width, img.height);
+                    els.fCtx.drawImage(img, (img.width-s)/2, (img.height-s)/2, s, s, 0, 0, 512, 512);
+                    
+                    els.freeze.classList.remove('hidden');
+                    els.video.classList.add('hidden');
+
+                    state.scanning = true;
+                    state.activeSearch = true; 
+                    state.standardFailCount = 100; 
+                    
+                    els.status.textContent = "PROCESSING...";
+                    requestAnimationFrame(processLoop);
+                };
+                img.src = ev.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function saveQR() { 
+            const a = document.createElement('a'); 
+            a.download = 'Spectrum_QR.png'; 
+            a.href = els.main.toDataURL(); 
+            a.click(); 
+        }
+
+        // === INIT ===
+        [els.r, els.g, els.b].forEach(el => el.addEventListener('input', generateQR));
+        generateQR();
+
+    </script>
+</body>
+</html>
