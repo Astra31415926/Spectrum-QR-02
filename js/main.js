@@ -4,32 +4,35 @@ const App = {
     history: ['scr-main'],
 
     init: function() {
-        // Скрываем все экраны при старте
+        // Скрываем все экраны
         document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
         this.navTo('main');
         this.bindInputs();
     },
 
     navTo: function(id) {
-        // 1. Скрываем ВСЕ экраны
+        // 1. Скрываем ВСЕ экраны принудительно
         document.querySelectorAll('.screen').forEach(s => {
             s.style.display = 'none';
             s.classList.remove('active');
         });
 
-        // 2. Определяем ID (добавляем scr- если нужно)
+        // 2. Определяем ID
         const targetId = id.startsWith('scr-') ? id : 'scr-' + id;
         const target = document.getElementById(targetId);
         
         if (target) {
-            // 3. Показываем нужный экран
-            target.style.display = 'block'; 
+            // 3. Показываем нужный (flex для генераторов, block для остальных)
+            if (targetId.includes('gen')) {
+                target.style.display = 'flex';
+            } else {
+                target.style.display = 'block';
+            }
             target.classList.add('active');
             
             // 4. Управление нижним меню
             const nav = document.getElementById('bottom-nav');
             if (nav) {
-                // Скрываем меню в генераторах и сканере
                 if (targetId.includes('gen') || targetId.includes('scan')) {
                     nav.style.display = 'none';
                 } else {
@@ -42,8 +45,6 @@ const App = {
             if (backBtn) {
                 backBtn.style.visibility = (targetId === 'scr-main') ? 'hidden' : 'visible';
             }
-        } else {
-            console.error('Ошибка: Экран ' + targetId + ' не найден!');
         }
     },
 
@@ -108,8 +109,9 @@ const ScannerEngine = {
         const file = event.target.files[0];
         if (!file) return;
 
+        // Проверка библиотеки
         if (typeof jsQR === 'undefined') {
-            alert("Ошибка: Библиотека jsQR не загружена. Проверьте консоль.");
+            alert("Ошибка: Библиотека jsQR не загружена.");
             return;
         }
 
@@ -120,30 +122,54 @@ const ScannerEngine = {
             
             img.onload = function() {
                 try {
-                    // Создаем скрытый canvas для декодирования
+                    // === ОПТИМИЗАЦИЯ КАЧЕСТВА СКАНИРОВАНИЯ ===
+                    // Создаем canvas нужного размера
                     const canvas = document.createElement('canvas');
                     const ctx = canvas.getContext('2d');
-                    canvas.width = img.width;
-                    canvas.height = img.height;
-                    ctx.drawImage(img, 0, 0);
                     
-                    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                    const code = jsQR(imageData.data, imageData.width, imageData.height);
+                    // Ограничиваем размер, чтобы не тормозило
+                    // jsQR лучше работает с изображениями до ~800px
+                    const MAX_SIZE = 800;
+                    let w = img.width;
+                    let h = img.height;
+                    
+                    if (w > h && w > MAX_SIZE) {
+                        h = Math.round(h * MAX_SIZE / w);
+                        w = MAX_SIZE;
+                    } else if (h > MAX_SIZE) {
+                        w = Math.round(w * MAX_SIZE / h);
+                        h = MAX_SIZE;
+                    }
+                    
+                    canvas.width = w;
+                    canvas.height = h;
+                    ctx.drawImage(img, 0, 0, w, h);
+                    
+                    const imageData = ctx.getImageData(0, 0, w, h);
+                    
+                    // Попытка декодирования
+                    const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                        inversionAttempts: "attemptBoth" // Пробуем и инвертированные цвета
+                    });
                     
                     if (code && code.data) {
-                        // Выводим результат
+                        // УСПЕХ: Выводим результат
+                        alert("Успех! Результат: " + code.data);
+                        
+                        // Обновляем UI
                         let resDiv = document.getElementById('scan-results');
                         if(resDiv) resDiv.innerText = code.data;
                         
-                        // Переходим на экран сканера
+                        // Переходим на экран результата
                         App.navTo('scan-choice');
 
                     } else {
-                        alert("QR-код не найден.");
+                        // ОШИБКА: Код не найден
+                        alert("QR not found, try another image.\n(Попробуйте другое, более четкое фото)");
                     }
                 } catch (e) {
                     console.error(e);
-                    alert("Ошибка обработки: " + e.message);
+                    alert("Ошибка обработки изображения.");
                 }
             };
             img.src = ev.target.result;
@@ -152,8 +178,8 @@ const ScannerEngine = {
     },
     
     startCamera: function() {
-        // Заглушка для камеры, если нужно
-        alert("Функция камеры в разработке. Используйте Галерею.");
+        // Заглушка камеры
+        alert("Функция камеры в разработке. Используйте кнопку 'Gallery'.");
     }
 };
 
