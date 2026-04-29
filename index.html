@@ -1,535 +1,16 @@
 <!DOCTYPE html>
-<html lang="uk">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ornament-QR</title>
-    
-    <!-- Dependencies -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    <title>Spectrum-QR</title>
     
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
-
-    <style>
-        :root {
-            --primary-orange: #FF6200;
-            --primary-green: #00FF9D;
-            --metal-dark: #121212;
-            --metal-light: #2a2a2a;
-            --rust: #4a2c2a;
-            --text-main: #e0e0e0;
-        }
-
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        
-        html, body {
-            margin: 0; padding: 0;
-            height: 100%; width: 100%;
-            overflow: hidden;
-            background-color: #0a0908;
-            font-family: 'Share Tech Mono', monospace;
-            color: var(--text-main);
-        }
-
-        /* --- Dark Rusted Metal Background Texture --- */
-        body::before {
-            content: "";
-            position: fixed; 
-            inset: 0;
-            background: 
-                radial-gradient(ellipse at 30% 20%, rgba(35, 28, 25, 0.6) 0%, transparent 50%),
-                radial-gradient(ellipse at 70% 80%, rgba(40, 32, 28, 0.5) 0%, transparent 45%),
-                radial-gradient(ellipse at 50% 50%, rgba(25, 22, 20, 0.8) 0%, transparent 70%),
-                radial-gradient(circle at 15% 60%, rgba(45, 32, 28, 0.3) 0%, transparent 30%),
-                radial-gradient(circle at 85% 30%, rgba(38, 30, 26, 0.25) 0%, transparent 35%),
-                linear-gradient(180deg, #0d0b09 0%, #0a0908 50%, #080706 100%);
-            pointer-events: none;
-            z-index: 0;
-        }
-
-        body::after {
-            content: "";
-            position: fixed; 
-            inset: 0;
-            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
-            opacity: 0.04;
-            pointer-events: none;
-            z-index: 0;
-            mix-blend-mode: overlay;
-        }
-
-        #app {
-            position: relative; z-index: 1;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* --- Navigation Styles --- */
-        .nav-bar {
-            height: 60px;
-            min-height: 60px;
-            background: rgba(15, 13, 11, 0.92);
-            backdrop-filter: blur(12px);
-            border-bottom: 1px solid rgba(60, 50, 45, 0.4);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 16px;
-            z-index: 100;
-        }
-        .bottom-nav {
-            height: 70px;
-            min-height: 70px;
-            border-top: 1px solid rgba(60, 50, 45, 0.4);
-            background: rgba(10, 9, 8, 0.95);
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            z-index: 100;
-        }
-        .nav-btn {
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            color: #888; font-size: 10px; gap: 4px; cursor: pointer; transition: 0.2s;
-        }
-        .nav-btn:active, .nav-btn.active { color: var(--primary-orange); }
-
-        /* --- Screens Layout --- */
-        .screen {
-            flex: 1;
-            display: none;
-            flex-direction: column;
-            height: 100%;
-            overflow: hidden;
-        }
-        .screen.active { display: flex; }
-
-        /* --- Retro-Tech Buttons --- */
-        .btn-retro {
-            background: linear-gradient(180deg, #2a2724 0%, #1a1816 100%);
-            border: 1px solid #3d3530;
-            box-shadow: 0 4px 0 #0a0908, inset 0 1px 0 rgba(255,255,255,0.05);
-            color: #ddd;
-            padding: 12px 24px;
-            border-radius: 4px;
-            font-family: 'Orbitron', sans-serif;
-            font-weight: 700;
-            text-transform: uppercase;
-            cursor: pointer;
-            transition: transform 0.1s, box-shadow 0.1s;
-            letter-spacing: 1px;
-        }
-        .btn-retro:active { transform: translateY(2px); box-shadow: 0 2px 0 #0a0908; }
-        
-        .btn-create { background: linear-gradient(180deg, #FF7F00 0%, #CC5500 100%); border-color: #FF6200; color: #fff; }
-        .btn-scan { background: linear-gradient(180deg, #00FF9D 0%, #00CC7D 100%); border-color: #00FF9D; color: #000; }
-
-        /* --- Generator Layout --- */
-        .gen-layout {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-        }
-        .qr-zone {
-            height: 40vh;
-            min-height: 200px;
-            flex-shrink: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 16px;
-        }
-        .qr-frame {
-            background: rgba(10, 9, 8, 0.95);
-            border: 2px solid rgba(60, 50, 45, 0.5);
-            box-shadow: 0 0 30px rgba(0,0,0,0.9), inset 0 0 20px rgba(0,0,0,0.3);
-            width: 100%; height: 100%;
-            max-width: 280px; max-height: 280px;
-            display: flex; align-items: center; justify-content: center;
-            overflow: hidden;
-            cursor: pointer;
-            transition: border-color 0.2s;
-        }
-        .qr-frame:hover {
-            border-color: rgba(255, 98, 0, 0.5);
-        }
-        .qr-frame canvas {
-            width: 100%; height: 100%; object-fit: contain;
-        }
-        .input-zone {
-            flex: 1;
-            padding: 20px;
-            display: flex; flex-direction: column;
-            gap: 16px;
-            overflow-y: auto;
-            justify-content: center;
-        }
-
-        /* --- Inputs --- */
-        .text-input {
-            background: rgba(8, 7, 6, 0.9);
-            border: 2px solid rgba(60, 50, 45, 0.5);
-            color: #fff;
-            padding: 16px;
-            font-size: 16px;
-            border-radius: 4px;
-            outline: none;
-            resize: none;
-            transition: border-color 0.2s, box-shadow 0.2s;
-            font-family: 'Share Tech Mono', monospace;
-        }
-        .text-input:focus { 
-            border-color: var(--primary-orange); 
-            box-shadow: 0 0 15px rgba(255,98,0,0.15); 
-        }
-
-        /* --- Content Screens --- */
-        .content-screen {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            padding: 24px 20px;
-            overflow-y: auto;
-            gap: 16px;
-        }
-        .content-title {
-            font-family: 'Orbitron', sans-serif;
-            font-weight: 700;
-            font-size: 18px;
-            color: var(--primary-orange);
-            letter-spacing: 1px;
-            margin-bottom: 8px;
-        }
-        .content-text {
-            font-size: 14px;
-            line-height: 1.7;
-            color: rgba(220, 215, 210, 0.9);
-        }
-        .content-text p { margin-bottom: 16px; }
-        .content-link {
-            color: var(--primary-orange);
-            text-decoration: none;
-            transition: opacity 0.2s;
-        }
-        .content-link:hover { opacity: 0.8; }
-        .content-list {
-            padding-left: 20px;
-            margin: 12px 0;
-        }
-        .content-list li {
-            margin-bottom: 8px;
-            position: relative;
-        }
-        .content-list li::before {
-            content: "›";
-            position: absolute;
-            left: -16px;
-            color: var(--primary-orange);
-        }
-
-        /* --- Scanner Overlay --- */
-        #scanner-overlay {
-            position: absolute; inset: 0; z-index: 500;
-            background: #0a0908;
-            display: none; flex-direction: column;
-        }
-        .scan-viewport { 
-            flex: 1; 
-            position: relative; 
-            overflow: hidden; 
-            background: #0a0908; 
-        }
-        #video-feed { width: 100%; height: 100%; object-fit: cover; }
-        #freeze-frame { position: absolute; width: 100%; height: 100%; object-fit: contain; display: none; }
-        
-        /* Viewfinder */
-        .viewfinder-box {
-            position: absolute; top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            width: 70%; height: 40%;
-            padding-bottom: 70%;
-            pointer-events: none;
-        }
-        .corner { position: absolute; width: 30px; height: 30px; border-color: rgba(255,255,255,0.5); transition: all 0.2s; }
-        .tl { top: 0; left: 0; border-top: 4px solid; border-left: 4px solid; }
-        .tr { top: 0; right: 0; border-top: 4px solid; border-right: 4px solid; }
-        .bl { bottom: 0; left: 0; border-bottom: 4px solid; border-left: 4px solid; }
-        .br { bottom: 0; right: 0; border-bottom: 4px solid; border-right: 4px solid; }
-        
-        .viewfinder-box.locked .corner { border-color: var(--primary-green); box-shadow: 0 0 15px var(--primary-green); transform: scale(1.1); }
-        
-        /* Flash FX */
-        .flash-fx { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; z-index: 200; }
-        .flash-fx.active { animation: flash-anim 0.3s ease-out; }
-        @keyframes flash-anim { 0% { opacity: 0; } 30% { opacity: 0.8; } 100% { opacity: 0; } }
-
-        /* Scan Bottom Panel */
-        .scan-panel {
-            background: rgba(10, 9, 8, 0.95); padding: 16px; border-top: 1px solid rgba(60, 50, 45, 0.4);
-            transition: all 0.3s ease;
-        }
-        
-        /* Scan Results */
-        .scan-results-container {
-            display: none;
-            flex-direction: column;
-            gap: 12px;
-            width: 100%;
-        }
-        
-        .scan-result-item {
-            background: rgba(15, 13, 11, 0.8);
-            border: 1px solid rgba(60, 50, 45, 0.5);
-            border-radius: 6px;
-            overflow: hidden;
-        }
-        
-        .scan-result-item.single {
-            border-width: 2px;
-        }
-        
-        .scan-result-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 8px 12px;
-            background: rgba(30, 28, 26, 0.6);
-            border-bottom: 1px solid rgba(60, 50, 45, 0.3);
-        }
-        
-        .scan-result-label {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 12px;
-            font-weight: 700;
-            letter-spacing: 1px;
-        }
-        
-        .scan-result-label.red { color: #FF004D; }
-        .scan-result-label.green { color: #00FF41; }
-        .scan-result-label.blue { color: #0088FF; }
-        
-        .scan-result-content {
-            padding: 12px;
-            font-size: 14px;
-            line-height: 1.5;
-            word-break: break-all;
-            color: rgba(220, 215, 210, 0.95);
-            min-height: 60px;
-            max-height: 200px;
-            overflow-y: auto;
-        }
-        
-        .scan-result-item.single .scan-result-content {
-            font-size: 16px;
-            min-height: 120px;
-            max-height: 300px;
-        }
-        
-        .scan-indicator-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background: #3d3530;
-        }
-        .scan-indicator-dot.r.active { background: #FF004D; box-shadow: 0 0 8px #FF004D; }
-        .scan-indicator-dot.g.active { background: #00FF41; box-shadow: 0 0 8px #00FF41; }
-        .scan-indicator-dot.b.active { background: #0088FF; box-shadow: 0 0 8px #0088FF; }
-
-        /* Timer indicator */
-        .timer-bar {
-            height: 3px;
-            background: rgba(60, 50, 45, 0.4);
-            position: relative;
-            overflow: hidden;
-            margin-bottom: 12px;
-            border-radius: 2px;
-        }
-        .timer-progress {
-            height: 100%;
-            background: var(--primary-orange);
-            transition: width 0.1s linear;
-        }
-
-        /* Contact info styling */
-        .contact-item {
-            display: block;
-            padding: 12px 16px;
-            background: rgba(15, 13, 11, 0.6);
-            border: 1px solid rgba(60, 50, 45, 0.3);
-            border-radius: 4px;
-            margin-bottom: 12px;
-            transition: border-color 0.2s;
-            text-decoration: none;
-            color: inherit;
-        }
-        .contact-item:hover { border-color: rgba(255, 98, 0, 0.4); }
-        .contact-label {
-            font-size: 11px;
-            color: rgba(180, 170, 160, 0.7);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 4px;
-        }
-        .contact-value { font-size: 14px; color: #e8e4e0; }
-
-        /* Menu Overlay */
-        #menu-overlay {
-            position: absolute;
-            inset: 0;
-            background: rgba(10, 9, 8, 0.98);
-            z-index: 200;
-            display: none;
-            flex-direction: column;
-            padding: 24px;
-            overflow-y: auto;
-        }
-        
-        .menu-header {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 24px;
-            color: var(--primary-orange);
-            margin-bottom: 32px;
-            text-align: center;
-        }
-        
-        .menu-section {
-            margin-bottom: 24px;
-        }
-        
-        .menu-section-title {
-            font-size: 12px;
-            color: rgba(180, 170, 160, 0.6);
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            margin-bottom: 12px;
-        }
-        
-        .menu-item {
-            display: flex;
-            align-items: center;
-            padding: 14px 16px;
-            background: rgba(15, 13, 11, 0.6);
-            border: 1px solid rgba(60, 50, 45, 0.3);
-            border-radius: 4px;
-            margin-bottom: 8px;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-size: 14px;
-        }
-        .menu-item:hover {
-            border-color: rgba(255, 98, 0, 0.4);
-            background: rgba(20, 18, 16, 0.8);
-        }
-        .menu-item.active {
-            border-color: var(--primary-orange);
-            color: var(--primary-orange);
-        }
-        
-        .menu-close {
-            position: absolute;
-            top: 16px;
-            right: 16px;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            color: rgba(180, 170, 160, 0.6);
-            cursor: pointer;
-        }
-
-        /* Language toggle */
-        .lang-toggle {
-            display: flex;
-            gap: 8px;
-        }
-        .lang-btn {
-            flex: 1;
-            padding: 10px;
-            text-align: center;
-            background: rgba(15, 13, 11, 0.6);
-            border: 1px solid rgba(60, 50, 45, 0.3);
-            border-radius: 4px;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-size: 13px;
-        }
-        .lang-btn.active {
-            border-color: var(--primary-orange);
-            color: var(--primary-orange);
-            background: rgba(255, 98, 0, 0.1);
-        }
-
-        /* Save Modal */
-        .modal-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.85);
-            z-index: 1000;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-        .modal-content {
-            background: rgba(15, 13, 11, 0.98);
-            border: 1px solid rgba(60, 50, 45, 0.5);
-            border-radius: 8px;
-            padding: 24px;
-            width: 100%;
-            max-width: 320px;
-        }
-        .modal-title {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 16px;
-            color: var(--primary-orange);
-            margin-bottom: 16px;
-            text-align: center;
-        }
-        .modal-input {
-            width: 100%;
-            background: rgba(8, 7, 6, 0.9);
-            border: 2px solid rgba(60, 50, 45, 0.5);
-            color: #fff;
-            padding: 12px;
-            font-size: 14px;
-            border-radius: 4px;
-            outline: none;
-            margin-bottom: 16px;
-            font-family: 'Share Tech Mono', monospace;
-        }
-        .modal-input:focus {
-            border-color: var(--primary-orange);
-        }
-        .modal-buttons {
-            display: flex;
-            gap: 12px;
-        }
-        .modal-btn {
-            flex: 1;
-            padding: 12px;
-            border-radius: 4px;
-            font-family: 'Orbitron', sans-serif;
-            font-size: 12px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .modal-btn-cancel {
-            background: rgba(30, 28, 26, 0.8);
-            border: 1px solid rgba(60, 50, 45, 0.5);
-            color: rgba(180, 170, 160, 0.8);
-        }
-        .modal-btn-save {
-            background: linear-gradient(180deg, #FF7F00 0%, #CC5500 100%);
-            border: 1px solid #FF6200;
-            color: #fff;
-        }
-
-    </style>
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/mobile.css">
 </head>
 <body>
 
@@ -537,1010 +18,150 @@
     
     <!-- TOP NAVIGATION -->
     <header class="nav-bar">
-        <div class="nav-btn" id="btn-back" style="visibility:hidden;" onclick="navBack()">
+        <div class="nav-btn" id="btn-back" style="visibility:hidden;" onclick="App.navBack()">
             <span style="font-size: 24px;">←</span>
         </div>
-        <h1 class="font-bold text-lg tracking-widest" style="font-family: 'Orbitron', sans-serif; letter-spacing: 2px;">ornament-QR</h1>
-        <div class="nav-btn" onclick="openMenu()">
+        <h1 class="app-title">Spectrum-QR</h1>
+        <div class="nav-btn" onclick="App.toggleMenu()">
             <span style="font-size: 24px;">☰</span>
         </div>
     </header>
 
     <!-- SCREEN CONTAINER -->
-    <main style="flex:1; position:relative; overflow:hidden;">
+    <main class="screen-container">
         
         <!-- SCREEN: MAIN -->
         <div id="scr-main" class="screen active">
-            <div class="flex-1 flex flex-col items-center justify-center p-8 text-center">
-                <p class="text-sm mb-4 max-w-xs" style="color: rgba(220, 215, 210, 0.85); line-height: 1.6;" data-i18n="main_desc1">
-                    Оздоблені QR-коди — візуальні візерунки, що кодують дані.
-                </p>
-                <p class="text-sm mb-8 max-w-xs" style="color: rgba(180, 170, 160, 0.7); line-height: 1.6;" data-i18n="main_desc2">
-                    Багатошарові кольорові канали дозволяють збільшити ємність інформації понад стандартний QR.
-                </p>
-                <div class="flex gap-4 w-full max-w-sm">
-                    <button class="btn-retro btn-create flex-1" onclick="navTo('create-opt')" data-i18n="btn_create">+ Створити</button>
-                    <button class="btn-retro btn-scan flex-1" onclick="openScanner()" data-i18n="btn_scan">Сканер</button>
+            <div class="main-content">
+                <p class="main-text">Ornamental QR codes — visual patterns that encode data.</p>
+                <p class="main-subtext">Multi-layer color channels allow increased information capacity beyond standard QR.</p>
+                <div class="btn-group">
+                    <button class="btn-retro btn-create" onclick="App.navTo('create-opt')">+ Create</button>
+                    <button class="btn-retro btn-scan" onclick="App.navTo('scan-choice')">Scan</button>
                 </div>
             </div>
         </div>
 
         <!-- SCREEN: CREATE OPTIONS -->
         <div id="scr-create-opt" class="screen">
-            <div class="flex-1 flex flex-col items-center justify-center p-8 gap-6">
-                <button class="btn-retro w-full max-w-xs" onclick="navTo('gen-ornament')" data-i18n="opt_ornament">Оздоблений QR</button>
-                <button class="btn-retro w-full max-w-xs" style="background: rgba(30, 28, 26, 0.9); color: rgba(150, 140, 130, 0.8); border-color: rgba(60, 50, 45, 0.5);" onclick="navTo('gen-3d')">3D QR (beta)</button>
+            <div class="center-box">
+                <button class="btn-retro w-full" onclick="App.navTo('gen-ornament')">Ornament QR</button>
+                <button class="btn-retro w-full secondary" onclick="App.navTo('gen-3d')">3D-QR</button>
             </div>
         </div>
 
         <!-- SCREEN: GENERATOR ORNAMENT -->
-        <div id="scr-gen-ornament" class="screen">
-            <div class="gen-layout">
-                <div class="qr-zone">
-                    <div class="qr-frame" onclick="showSaveModal('ornament')">
-                        <canvas id="canvas-ornament" width="512" height="512"></canvas>
-                    </div>
+        <div id="scr-gen-ornament" class="screen gen-layout">
+            <div class="qr-zone">
+                <div class="qr-frame" onclick="App.saveImage('ornament')">
+                    <canvas id="canvas-ornament" width="512" height="512"></canvas>
                 </div>
-                <div class="input-zone">
-                    <textarea id="input-ornament" class="text-input h-24" placeholder="Введіть текст..." oninput="handleOrnamentInput()"></textarea>
-                    <div class="flex gap-4 mt-2">
-                        <button class="btn-retro flex-1" onclick="regenerateOrnament()" data-i18n="btn_regenerate">Перегенерувати</button>
-                        <button id="btn-save-orn" class="btn-retro flex-1" onclick="showSaveModal('ornament')" disabled data-i18n="btn_save">Зберегти</button>
-                    </div>
-                </div>
+            </div>
+            <div class="input-zone">
+                <textarea id="input-ornament" class="text-input" placeholder="Enter text..." oninput="OrnamentEngine.handleInput()"></textarea>
+                <button id="btn-save-orn" class="btn-retro w-full" onclick="App.saveImage('ornament')" disabled>Save</button>
             </div>
         </div>
 
         <!-- SCREEN: GENERATOR 3D -->
-        <div id="scr-gen-3d" class="screen">
-            <div class="gen-layout">
-                <div class="qr-zone">
-                    <div class="qr-frame" onclick="showSaveModal('3d')">
-                        <canvas id="canvas-3d" width="512" height="512"></canvas>
-                    </div>
+        <div id="scr-gen-3d" class="screen gen-layout">
+            <div class="qr-zone">
+                <div class="qr-frame" onclick="App.saveImage('3d')">
+                    <canvas id="canvas-3d" width="512" height="512"></canvas>
                 </div>
-                <div class="input-zone">
-                    <textarea id="input-r" class="text-input h-16" style="border-color:#FF004D;" placeholder="RED канал" oninput="handle3DInput()"></textarea>
-                    <textarea id="input-g" class="text-input h-16" style="border-color:#00FF41;" placeholder="GREEN канал" oninput="handle3DInput()"></textarea>
-                    <textarea id="input-b" class="text-input h-16" style="border-color:#0088FF;" placeholder="BLUE канал" oninput="handle3DInput()"></textarea>
-                    <button id="btn-save-3d" class="btn-retro w-full mt-2" onclick="showSaveModal('3d')" disabled data-i18n="btn_save">Зберегти</button>
+            </div>
+            <!-- Input zone uses column-reverse on mobile to keep Blue visible -->
+            <div class="input-zone" id="input-zone-3d">
+                <textarea id="input-r" class="text-input red" placeholder="RED Channel" oninput="Engine3D.handleInput()"></textarea>
+                <textarea id="input-g" class="text-input green" placeholder="GREEN Channel" oninput="Engine3D.handleInput()"></textarea>
+                <textarea id="input-b" class="text-input blue" placeholder="BLUE Channel" oninput="Engine3D.handleInput()"></textarea>
+                <button id="btn-save-3d" class="btn-retro w-full" onclick="App.saveImage('3d')" disabled>Save</button>
+            </div>
+        </div>
+
+        <!-- SCREEN: SCAN CHOICE (New Logic) -->
+        <div id="scr-scan-choice" class="screen">
+            <div class="center-box">
+                <h2 class="screen-title">Select Source</h2>
+                <div class="btn-group-vertical">
+                    <button class="btn-retro btn-scan" onclick="ScannerEngine.startCamera()">Camera</button>
+                    <button class="btn-retro" onclick="document.getElementById('file-input-scan').click()">Gallery</button>
+                    <input type="file" id="file-input-scan" accept="image/*" style="display:none" onchange="ScannerEngine.handleFile(event)">
                 </div>
             </div>
         </div>
 
-        <!-- SCREEN: GALLERY -->
-        <div id="scr-gallery" class="screen">
-            <div class="content-screen">
-                <h2 class="content-title" data-i18n="nav_gallery">Галерея</h2>
-                <div class="content-text">
-                    <p style="color: rgba(200, 190, 180, 0.8);" data-i18n="gallery_text1">
-                        Підбірка декоративних QR-кодів.
-                    </p>
-                    <p style="color: rgba(180, 170, 160, 0.7);" data-i18n="gallery_text2">
-                        10 обраних прикладів.
-                    </p>
-                </div>
-            </div>
-        </div>
-
-        <!-- SCREEN: HISTORY -->
-        <div id="scr-history" class="screen">
-            <div class="content-screen">
-                <h2 class="content-title" data-i18n="nav_history">Історія</h2>
-                <div class="content-text">
-                    <p data-i18n="history_p1">
-                        Ідея збільшення пропускної здатності QR-кодів з використанням кольорових каналів не нова. Її пропонував Масахіро Хара, творець QR-кодів.
-                    </p>
-                    <p data-i18n="history_p2">
-                        З екрану монітора кольорові коди читаються добре. Але при переході на фізичні носії виникають проблеми.
-                    </p>
-                    <p data-i18n="history_p3">
-                        Стандартний друк CMYK спотворює кольори та ускладнює декодування.
-                    </p>
-                    <p data-i18n="history_p4">
-                        Автор проекту досліджує альтернативний підхід до вирішення цієї задачі.
-                    </p>
-                    <p style="margin-top: 20px;" data-i18n="history_more">
-                        Детальніше:
-                    </p>
-                    <ul class="content-list">
-                        <li><a href="#" class="content-link">Zenodo</a></li>
-                        <li><a href="#" class="content-link">Medium</a> <span data-i18n="history_articles">(статті)</span></li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <!-- SCREEN: TECHNOLOGY -->
-        <div id="scr-tech" class="screen">
-            <div class="content-screen">
-                <h2 class="content-title" data-i18n="nav_tech">Технологія</h2>
-                <div class="content-text">
-                    <p data-i18n="tech_p1">
-                        Декоративні QR-коди формуються на основі стандартної структури QR.
-                    </p>
-                    <p data-i18n="tech_p2">
-                        Розмір сітки залежить від довжини даних.
-                    </p>
-                    <ul class="content-list" style="margin: 16px 0;">
-                        <li data-i18n="tech_li1">Червоний і зелений канали містять декоративні візерунки</li>
-                        <li data-i18n="tech_li2">Синій канал містить сам QR-код</li>
-                    </ul>
-                    <p style="margin-top: 8px;" data-i18n="tech_p3">
-                        Це робить код візуально менш помітним для людини, але при цьому він залишається читабельним для сканера.
-                    </p>
-                </div>
-            </div>
-        </div>
-
-        <!-- SCREEN: CONTACTS -->
-        <div id="scr-contacts" class="screen">
-            <div class="content-screen">
-                <h2 class="content-title" data-i18n="nav_contacts">Контакти</h2>
-                <div class="content-text">
-                    <p style="margin-bottom: 24px;" data-i18n="contacts_intro">
-                        Для співпраці, розробки індивідуальних QR-кодів та замовлень на друк за спеціальною технологією:
-                    </p>
-                    
-                    <a href="tel:+380635058292" class="contact-item">
-                        <div class="contact-label" data-i18n="contact_phone">Телефон</div>
-                        <div class="contact-value">+380635058292</div>
-                    </a>
-                    
-                    <a href="mailto:colqrnament@gmail.com" class="contact-item">
-                        <div class="contact-label">Email</div>
-                        <div class="contact-value">colqrnament@gmail.com</div>
-                    </a>
-                    
-                    <a href="https://astra31415926.github.io" target="_blank" class="contact-item">
-                        <div class="contact-label" data-i18n="contact_site">Сайт</div>
-                        <div class="contact-value">astra31415926.github.io</div>
-                    </a>
-                </div>
-            </div>
-        </div>
+        <!-- SCREEN: PLACEHOLDERS (Gallery, History, Tech, Contacts) -->
+        <div id="scr-gallery" class="screen"><div class="center-box">Gallery Coming Soon</div></div>
+        <div id="scr-history" class="screen"><div class="center-box">History Info</div></div>
+        <div id="scr-tech" class="screen"><div class="center-box">Technology Info</div></div>
+        <div id="scr-contacts" class="screen"><div class="center-box">Contacts Info</div></div>
 
     </main>
 
     <!-- BOTTOM NAVIGATION -->
-    <footer class="bottom-nav">
-        <div class="nav-btn" onclick="navTo('gallery')">
-            <svg style="width:24px; height:24px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-            <span data-i18n="nav_gallery">Галерея</span>
+    <footer class="bottom-nav" id="bottom-nav">
+        <div class="nav-btn" onclick="App.navTo('gallery')">
+            <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+            <span>Gallery</span>
         </div>
-        <div class="nav-btn" onclick="navTo('history')">
-            <svg style="width:24px; height:24px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-            <span data-i18n="nav_history">Історія</span>
+        <div class="nav-btn" onclick="App.navTo('history')">
+            <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <span>History</span>
         </div>
-        <div class="nav-btn" onclick="navTo('tech')">
-            <svg style="width:24px; height:24px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-            <span data-i18n="nav_tech">Технологія</span>
+        <div class="nav-btn" onclick="App.navTo('tech')">
+            <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+            <span>Tech</span>
         </div>
-        <div class="nav-btn" onclick="navTo('contacts')">
-            <svg style="width:24px; height:24px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
-            <span data-i18n="nav_contacts">Контакти</span>
+        <div class="nav-btn" onclick="App.navTo('contacts')">
+            <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+            <span>Contacts</span>
         </div>
     </footer>
 
     <!-- SCANNER OVERLAY -->
-    <div id="scanner-overlay">
-        <header class="nav-bar" style="border-bottom:0;">
-            <div class="nav-btn" onclick="closeScanner()"><span style="font-size:24px;">✕</span></div>
-            <h1 class="font-bold" data-i18n="scanner_title">СКАНЕР</h1>
+    <div id="scanner-overlay" class="overlay">
+        <header class="nav-bar">
+            <div class="nav-btn" onclick="ScannerEngine.close()"><span style="font-size:24px;">✕</span></div>
+            <h1 class="font-bold">SCANNER</h1>
             <div style="width:40px;"></div>
         </header>
         
         <div class="scan-viewport" id="scan-viewport">
             <video id="video-feed" autoplay playsinline muted></video>
             <canvas id="freeze-frame"></canvas>
-            
             <div class="viewfinder-box" id="viewfinder-corners">
                 <div class="corner tl"></div><div class="corner tr"></div>
                 <div class="corner bl"></div><div class="corner br"></div>
             </div>
-            
             <div id="flash-fx" class="flash-fx"></div>
         </div>
         
         <div class="scan-panel" id="scan-panel">
-            <!-- Timer bar -->
-            <div class="timer-bar" id="timer-bar" style="display: none;">
-                <div class="timer-progress" id="timer-progress"></div>
-            </div>
-            
-            <!-- Scanning UI -->
-            <div id="scan-controls">
-                <div class="flex gap-2">
-                    <button class="btn-retro flex-1" id="btn-gallery" onclick="document.getElementById('file-input').click()" data-i18n="btn_gallery">Галерея</button>
-                    <input type="file" id="file-input" accept="image/*" style="display:none" onchange="ScannerEngine.handleFile(event)">
-                </div>
-            </div>
-            
-            <!-- Results Container -->
-            <div class="scan-results-container" id="scan-results">
-                <!-- Results will be inserted here -->
-            </div>
+            <!-- Scan results will be injected here by JS -->
+            <div class="scan-results-container" id="scan-results"></div>
         </div>
     </div>
 
     <!-- MENU OVERLAY -->
-    <div id="menu-overlay">
-        <div class="menu-close" onclick="closeMenu()">✕</div>
-        
+    <div id="menu-overlay" class="overlay menu-style">
+        <div class="menu-close" onclick="App.toggleMenu()">✕</div>
         <div class="menu-header">Menu</div>
-        
         <div class="menu-section">
-            <div class="menu-section-title" data-i18n="menu_navigation">Навігація</div>
-            <div class="menu-item" onclick="goHome(); closeMenu();">
-                <span data-i18n="menu_home">На головну</span>
-            </div>
-        </div>
-        
-        <div class="menu-section">
-            <div class="menu-section-title" data-i18n="menu_language">Мова</div>
-            <div class="lang-toggle">
-                <div class="lang-btn active" id="lang-uk" onclick="setLanguage('uk')">Українська</div>
-                <div class="lang-btn" id="lang-en" onclick="setLanguage('en')">English</div>
-            </div>
-        </div>
-        
-        <div class="menu-section">
-            <div class="menu-section-title" data-i18n="menu_support">Підтримка</div>
-            <div class="menu-item" onclick="navTo('contacts'); closeMenu();">
-                <span data-i18n="menu_donate">Підтримати автора</span>
-            </div>
-            <div style="padding: 12px; background: rgba(15, 13, 11, 0.6); border-radius: 4px; margin-top: 8px;">
-                <div style="font-size: 12px; color: rgba(180, 170, 160, 0.6); margin-bottom: 8px;" data-i18n="donate_requisites">Реквізити:</div>
-                <div style="font-size: 13px; margin-bottom: 4px;">+380635058292</div>
-                <div style="font-size: 13px;">colqrnament@gmail.com</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- SAVE MODAL -->
-    <div class="modal-overlay" id="save-modal">
-        <div class="modal-content">
-            <div class="modal-title" data-i18n="modal_save_title">Зберегти QR-код</div>
-            <input type="text" class="modal-input" id="save-filename" placeholder="Ім'я файлу" data-i18n-placeholder="modal_filename">
-            <div class="modal-buttons">
-                <button class="modal-btn modal-btn-cancel" onclick="closeSaveModal()" data-i18n="btn_cancel">Скасувати</button>
-                <button class="modal-btn modal-btn-save" onclick="executeSave()" data-i18n="btn_save">Зберегти</button>
-            </div>
+            <div class="menu-item" onclick="App.goHome(); App.toggleMenu();">Home</div>
         </div>
     </div>
 
 </div>
 
-<script>
-// ==========================================
-// TRANSLATIONS
-// ==========================================
-const translations = {
-    uk: {
-        main_desc1: "Оздоблені QR-коди — візуальні візерунки, що кодують дані.",
-        main_desc2: "Багатошарові кольорові канали дозволяють збільшити ємність інформації понад стандартний QR.",
-        btn_create: "+ Створити",
-        btn_scan: "Сканер",
-        btn_regenerate: "Перегенерувати",
-        btn_save: "Зберегти",
-        btn_gallery: "Галерея",
-        btn_cancel: "Скасувати",
-        opt_ornament: "Оздоблений QR",
-        nav_gallery: "Галерея",
-        nav_history: "Історія",
-        nav_tech: "Технологія",
-        nav_contacts: "Контакти",
-        gallery_text1: "Підбірка декоративних QR-кодів.",
-        gallery_text2: "10 обраних прикладів.",
-        history_p1: "Ідея збільшення пропускної здатності QR-кодів з використанням кольорових каналів не нова. Її пропонував Масахіро Хара, творець QR-кодів.",
-        history_p2: "З екрану монітора кольорові коди читаються добре. Але при переході на фізичні носії виникають проблеми.",
-        history_p3: "Стандартний друк CMYK спотворює кольори та ускладнює декодування.",
-        history_p4: "Автор проекту досліджує альтернативний підхід до вирішення цієї задачі.",
-        history_more: "Детальніше:",
-        history_articles: "(статті)",
-        tech_p1: "Декоративні QR-коди формуються на основі стандартної структури QR.",
-        tech_p2: "Розмір сітки залежить від довжини даних.",
-        tech_li1: "Червоний і зелений канали містять декоративні візерунки",
-        tech_li2: "Синій канал містить сам QR-код",
-        tech_p3: "Це робить код візуально менш помітним для людини, але при цьому він залишається читабельним для сканера.",
-        contacts_intro: "Для співпраці, розробки індивідуальних QR-кодів та замовлень на друк за спеціальною технологією:",
-        contact_phone: "Телефон",
-        contact_site: "Сайт",
-        scanner_title: "СКАНЕР",
-        menu_navigation: "Навігація",
-        menu_home: "На головну",
-        menu_language: "Мова",
-        menu_support: "Підтримка",
-        menu_donate: "Підтримати автора",
-        donate_requisites: "Реквізити:",
-        modal_save_title: "Зберегти QR-код",
-        modal_filename: "Ім'я файлу",
-        channel_red: "RED канал",
-        channel_green: "GREEN канал",
-        channel_blue: "BLUE канал",
-        scan_complete: "Сканування завершено"
-    },
-    en: {
-        main_desc1: "Ornamental QR codes — visual patterns that encode data.",
-        main_desc2: "Multi-layer color channels allow increased information capacity beyond standard QR.",
-        btn_create: "+ Create",
-        btn_scan: "Scan",
-        btn_regenerate: "Regenerate",
-        btn_save: "Save",
-        btn_gallery: "Gallery",
-        btn_cancel: "Cancel",
-        opt_ornament: "Ornament QR",
-        nav_gallery: "Gallery",
-        nav_history: "History",
-        nav_tech: "Technology",
-        nav_contacts: "Contacts",
-        gallery_text1: "A selection of decorative QR codes.",
-        gallery_text2: "10 selected examples.",
-        history_p1: "The idea of increasing QR code capacity using color channels is not new. It was proposed by Masahiro Hara, the creator of QR codes.",
-        history_p2: "Color codes read well from a monitor screen. But problems arise when moving to physical media.",
-        history_p3: "Standard CMYK printing distorts colors and complicates decoding.",
-        history_p4: "The project author explores an alternative approach to solving this problem.",
-        history_more: "More details:",
-        history_articles: "(articles)",
-        tech_p1: "Decorative QR codes are formed based on the standard QR structure.",
-        tech_p2: "The grid size depends on the data length.",
-        tech_li1: "Red and green channels contain decorative patterns",
-        tech_li2: "Blue channel contains the QR code itself",
-        tech_p3: "This makes the code visually less noticeable to humans, but still readable by the scanner.",
-        contacts_intro: "For collaboration, custom QR code development, and printing orders using special technology:",
-        contact_phone: "Phone",
-        contact_site: "Website",
-        scanner_title: "SCANNER",
-        menu_navigation: "Navigation",
-        menu_home: "Home",
-        menu_language: "Language",
-        menu_support: "Support",
-        menu_donate: "Support the author",
-        donate_requisites: "Details:",
-        modal_save_title: "Save QR Code",
-        modal_filename: "Filename",
-        channel_red: "RED Channel",
-        channel_green: "GREEN Channel",
-        channel_blue: "BLUE Channel",
-        scan_complete: "Scan complete"
-    }
-};
+<!-- Dependencies -->
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
 
-let currentLang = 'uk';
+<!-- Logic Scripts -->
+<script src="js/engine-ornament.js"></script>
+<script src="js/engine-3d.js"></script>
+<script src="js/main.js"></script>
 
-function setLanguage(lang) {
-    currentLang = lang;
-    
-    // Update language buttons
-    document.getElementById('lang-uk').classList.toggle('active', lang === 'uk');
-    document.getElementById('lang-en').classList.toggle('active', lang === 'en');
-    
-    // Update all translatable elements
-    document.querySelectorAll('[data-i18n]').forEach(el => {
-        const key = el.getAttribute('data-i18n');
-        if (translations[lang][key]) {
-            el.textContent = translations[lang][key];
-        }
-    });
-    
-    // Update placeholders
-    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
-        const key = el.getAttribute('data-i18n-placeholder');
-        if (translations[lang][key]) {
-            el.placeholder = translations[lang][key];
-        }
-    });
-}
-
-// ==========================================
-// NAVIGATION
-// ==========================================
-const UI = {
-    current: 'main',
-    history: ['main'],
-    screens: {
-        main: document.getElementById('scr-main'),
-        'create-opt': document.getElementById('scr-create-opt'),
-        'gen-ornament': document.getElementById('scr-gen-ornament'),
-        'gen-3d': document.getElementById('scr-gen-3d'),
-        gallery: document.getElementById('scr-gallery'),
-        history: document.getElementById('scr-history'),
-        tech: document.getElementById('scr-tech'),
-        contacts: document.getElementById('scr-contacts')
-    },
-
-    navTo(id) {
-        UI.history.push(UI.current);
-        UI.screens[UI.current].classList.remove('active');
-        UI.screens[id].classList.add('active');
-        UI.current = id;
-        document.getElementById('btn-back').style.visibility = (id === 'main') ? 'hidden' : 'visible';
-    },
-
-    navBack() {
-        if (UI.history.length <= 1) return;
-        const prev = UI.history.pop();
-        UI.screens[UI.current].classList.remove('active');
-        UI.screens[prev].classList.add('active');
-        UI.current = prev;
-        document.getElementById('btn-back').style.visibility = (prev === 'main') ? 'hidden' : 'visible';
-    },
-
-    reset() {
-        UI.history = ['main'];
-        UI.screens[UI.current].classList.remove('active');
-        UI.screens['main'].classList.add('active');
-        UI.current = 'main';
-        document.getElementById('btn-back').style.visibility = 'hidden';
-    }
-};
-
-const navTo = (id) => UI.navTo(id);
-const navBack = () => UI.navBack();
-const goHome = () => UI.reset();
-
-function openMenu() {
-    document.getElementById('menu-overlay').style.display = 'flex';
-}
-
-function closeMenu() {
-    document.getElementById('menu-overlay').style.display = 'none';
-}
-
-// ==========================================
-// SAVE MODAL
-// ==========================================
-let saveMode = 'ornament';
-
-function showSaveModal(mode) {
-    if (mode === 'ornament' && !document.getElementById('input-ornament').value) return;
-    if (mode === '3d') {
-        const r = document.getElementById('input-r').value;
-        const g = document.getElementById('input-g').value;
-        const b = document.getElementById('input-b').value;
-        if (!(r && g && b)) return;
-    }
-    
-    saveMode = mode;
-    const input = document.getElementById('save-filename');
-    input.value = `qr_${Date.now()}`;
-    document.getElementById('save-modal').style.display = 'flex';
-    input.focus();
-}
-
-function closeSaveModal() {
-    document.getElementById('save-modal').style.display = 'none';
-}
-
-function executeSave() {
-    const filename = document.getElementById('save-filename').value || `qr_${Date.now()}`;
-    const canvas = saveMode === 'ornament' ? 
-        document.getElementById('canvas-ornament') : 
-        document.getElementById('canvas-3d');
-    
-    const link = document.createElement('a');
-    link.download = `${filename}.png`;
-    link.href = canvas.toDataURL();
-    link.click();
-    
-    closeSaveModal();
-}
-
-// ==========================================
-// SPRITE LIBRARY
-// ==========================================
-const SPRITE_LIB = [
-    [73,42,28,127,28,42,73], [127,65,93,85,93,65,127], [85,62,99,42,99,62,85],
-    [42,119,34,73,34,119,42], [28,42,73,119,73,42,28], [0,62,34,42,46,32,63],
-    [15,1,29,5,52,16,64], [64,96,112,120,112,96,64], [76,102,51,25,51,102,76],
-    [119,69,117,0,87,81,119], [119,85,119,0,119,85,119], [119,65,93,20,93,65,119],
-    [62,73,93,127,93,73,62], [42,107,8,119,8,107,42], [8,42,8,119,8,42,8],
-    [28,8,65,99,65,8,28], [54,99,73,20,73,99,54], [63,31,15,7,3,1,0],
-    [127,63,31,15,7,3,1], [127,31,31,7,7,1,1], [119,17,93,68,119,17,89],
-    [119,21,87,80,127,17,89], [119,85,127,20,127,85,119], [87,80,87,0,117,5,117],
-    [95,80,87,65,117,5,125], [30,80,87,65,117,5,60], [91,80,11,93,104,5,109],
-    [42,99,8,93,8,99,42], [99,99,0,0,0,99,99], [99,99,99,99,99,99,99],
-    [119,93,99,34,99,93,119], [54,85,99,8,99,85,54], [91,73,109,36,54,18,91],
-    [127,8,107,34,107,8,127], [42,34,42,8,42,34,42], [56,43,9,127,72,106,14],
-    [60,72,81,99,69,9,30], [12,56,33,107,66,14,24], [32,126,34,34,34,63,2],
-    [100,94,51,42,102,61,19], [6,92,118,34,55,29,48], [28,62,119,99,119,62,28],
-    [62,99,73,93,73,99,62], [126,67,89,85,77,97,63], [54,85,107,28,107,85,54],
-    [127,119,99,73,99,119,127], [12,22,51,113,14,76,104], [107,73,8,127,8,73,107],
-    [0,62,34,42,58,2,126], [85,21,117,5,125,1,127], [52,102,71,85,71,102,52],
-    [8,8,42,34,54,20,93], [119,99,107,8,107,99,119], [62,34,107,8,107,34,62],
-    [73,62,34,107,34,62,73], [123,123,96,107,3,111,111], [91,27,96,107,3,108,109],
-    [0,63,32,62,2,126,0], [64,95,81,93,69,125,1], [51,51,102,102,76,76,25]
-];
-
-// ==========================================
-// GENERATOR ENGINE
-// ==========================================
-const GenEngine = {
-    seed: Date.now(),
-    
-    handleOrnamentInput() {
-        const val = document.getElementById('input-ornament').value;
-        document.getElementById('btn-save-orn').disabled = val.length === 0;
-        GenEngine.generateOrnament();
-    },
-
-    regenerateOrnament() {
-        GenEngine.seed = Math.random();
-        GenEngine.generateOrnament();
-    },
-
-    seededRandom() {
-        let x = Math.sin(GenEngine.seed++) * 10000;
-        return x - Math.floor(x);
-    },
-
-    generateOrnament() {
-        const text = document.getElementById('input-ornament').value;
-        const canvas = document.getElementById('canvas-ornament');
-        const ctx = canvas.getContext('2d');
-        
-        if(!text) {
-            ctx.fillStyle="#000"; ctx.fillRect(0,0,512,512); return;
-        }
-        
-        try {
-            const qr = qrcode(0, 'M');
-            qr.addData(unescape(encodeURIComponent(text)));
-            qr.make();
-            
-            const modCount = qr.getModuleCount();
-            const quietZone = 4;
-            const totalSize = modCount + quietZone * 2;
-            const cellSize = 512 / totalSize;
-
-            ctx.fillStyle = "#000"; ctx.fillRect(0,0,512,512);
-            ctx.globalCompositeOperation = "screen";
-
-            const gridR = GenEngine.buildGrid(totalSize);
-            const gridG = GenEngine.buildGrid(totalSize);
-
-            ctx.fillStyle = "#FF0000";
-            GenEngine.drawGrid(ctx, gridR, totalSize, cellSize);
-            
-            ctx.fillStyle = "#00FF00";
-            GenEngine.drawGrid(ctx, gridG, totalSize, cellSize);
-            
-            ctx.fillStyle = "#0000FF";
-            for(let r=0; r<modCount; r++) {
-                for(let c=0; c<modCount; c++) {
-                    if(qr.isDark(r, c)) {
-                        ctx.fillRect((c+quietZone)*cellSize, (r+quietZone)*cellSize, cellSize, cellSize);
-                    }
-                }
-            }
-            ctx.globalCompositeOperation = "source-over";
-        } catch(e) {}
-    },
-
-    buildGrid(size) {
-        const grid = Array(size).fill(0).map(() => Array(size).fill(0));
-        const center = Math.floor(size/2);
-        const maxBlocks = Math.ceil((size/2 + 7)/7);
-        const octantMap = new Map();
-
-        for(let by=0; by<maxBlocks; by++) {
-            for(let bx=by; bx<maxBlocks; bx++) {
-                const patternIdx = Math.floor(GenEngine.seededRandom() * SPRITE_LIB.length);
-                const pattern = SPRITE_LIB[patternIdx];
-                const flipX = GenEngine.seededRandom() > 0.5;
-                const flipY = GenEngine.seededRandom() > 0.5;
-
-                for(let py=0; py<7; py++) {
-                    for(let px=0; px<7; px++) {
-                        let sX = flipX ? (6-px) : px;
-                        let sY = flipY ? (6-py) : py;
-                        
-                        if((pattern[sY] >> (6-sX)) & 1) {
-                            let xRel = (bx*7) + px - 3;
-                            let yRel = (by*7) + py - 3;
-                            if(xRel >= yRel && yRel >= 0) octantMap.set(`${xRel},${yRel}`, true);
-                        }
-                    }
-                }
-            }
-        }
-
-        octantMap.forEach((v, k) => {
-            const [x, y] = k.split(',').map(Number);
-            const points = [[x, y], [y, x], [-x, y], [-y, x], [x, -y], [y, -x], [-x, -y], [-y, -x]];
-            points.forEach(([px, py]) => {
-                const aX = center + px; const aY = center + py;
-                if(aX >= 0 && aX < size && aY >= 0 && aY < size) grid[aY][aX] = 1;
-            });
-        });
-        return grid;
-    },
-
-    drawGrid(ctx, grid, size, cell) {
-        for(let r=0; r<size; r++) for(let c=0; c<size; c++) if(grid[r][c]) ctx.fillRect(c*cell, r*cell, cell+0.5, cell+0.5);
-    },
-
-    handle3DInput() {
-        const r = document.getElementById('input-r').value;
-        const g = document.getElementById('input-g').value;
-        const b = document.getElementById('input-b').value;
-        document.getElementById('btn-save-3d').disabled = !(r && g && b);
-        GenEngine.generate3D();
-    },
-
-    generate3D() {
-        const texts = [
-            document.getElementById('input-r').value,
-            document.getElementById('input-g').value,
-            document.getElementById('input-b').value
-        ];
-        if(!texts.some(t=>t)) return;
-        
-        let maxVer = 1;
-        texts.forEach(t => { if(t){ const tmp=qrcode(0,'M'); tmp.addData(t); tmp.make(); const v=Math.floor((tmp.getModuleCount()-17)/4); if(v>maxVer)maxVer=v; }});
-        
-        const canvas = document.getElementById('canvas-3d');
-        const ctx = canvas.getContext('2d');
-        ctx.fillStyle="#000"; ctx.fillRect(0,0,512,512);
-        ctx.globalCompositeOperation = "lighten";
-        
-        texts.forEach((text, i) => {
-            if(!text) return;
-            try {
-                const qr = qrcode(maxVer, 'M'); qr.addData(text); qr.make();
-                const mod = 512 / qr.getModuleCount();
-                ctx.fillStyle = i === 0 ? "#FF0000" : (i === 1 ? "#00FF00" : "#0000FF");
-                for(let r=0; r<qr.getModuleCount(); r++) for(let c=0; c<qr.getModuleCount(); c++) if(qr.isDark(r, c)) ctx.fillRect(c*mod, r*mod, mod, mod);
-            } catch(e) {}
-        });
-        ctx.globalCompositeOperation = "source-over";
-    }
-};
-
-const handleOrnamentInput = () => GenEngine.handleOrnamentInput();
-const regenerateOrnament = () => GenEngine.regenerateOrnament();
-const handle3DInput = () => GenEngine.handle3DInput();
-
-// ==========================================
-// SCANNER ENGINE
-// ==========================================
-const ScannerEngine = {
-    state: {
-        scanning: false,
-        locked: { r: false, g: false, b: false },
-        results: { r: null, g: null, b: null },
-        firstChannelFound: null,
-        timerStarted: false,
-        timerDuration: 0,
-        timerStartTime: 0,
-        timerInterval: null,
-        completed: false
-    },
-
-    els: {},
-    
-    init() {
-        this.els = {
-            video: document.getElementById('video-feed'),
-            canvas: document.getElementById('canvas-3d'),
-            ctx: document.getElementById('canvas-3d').getContext('2d', { willReadFrequently: true }),
-            freeze: document.getElementById('freeze-frame'),
-            fCtx: document.getElementById('freeze-frame').getContext('2d', { willReadFrequently: true }),
-            viewport: document.getElementById('scan-viewport'),
-            panel: document.getElementById('scan-panel'),
-            controls: document.getElementById('scan-controls'),
-            resultsContainer: document.getElementById('scan-results'),
-            viewfinder: document.getElementById('viewfinder-corners'),
-            flash: document.getElementById('flash-fx'),
-            timerBar: document.getElementById('timer-bar'),
-            timerProgress: document.getElementById('timer-progress'),
-            btnGallery: document.getElementById('btn-gallery')
-        };
-    },
-
-    open() {
-        document.getElementById('scanner-overlay').style.display = 'flex';
-        this.reset();
-        this.startCamera();
-    },
-
-    close() {
-        this.state.scanning = false;
-        if (this.state.timerInterval) {
-            clearInterval(this.state.timerInterval);
-        }
-        if(this.els.video.srcObject) {
-            this.els.video.srcObject.getTracks().forEach(t => t.stop());
-        }
-        document.getElementById('scanner-overlay').style.display = 'none';
-    },
-
-    reset() {
-        this.state = {
-            scanning: false,
-            locked: { r: false, g: false, b: false },
-            results: { r: null, g: null, b: null },
-            firstChannelFound: null,
-            timerStarted: false,
-            timerDuration: 0,
-            timerStartTime: 0,
-            timerInterval: null,
-            completed: false
-        };
-        
-        // Reset UI
-        this.els.viewport.style.display = 'flex';
-        this.els.controls.style.display = 'block';
-        this.els.btnGallery.style.display = 'block';
-        this.els.resultsContainer.style.display = 'none';
-        this.els.resultsContainer.innerHTML = '';
-        this.els.timerBar.style.display = 'none';
-        this.els.timerProgress.style.width = '0%';
-        this.els.video.style.display = 'block';
-        this.els.freeze.style.display = 'none';
-    },
-
-    applyBradleyStandard(imgData, chIdx) {
-        const w = imgData.width, h = imgData.height;
-        const input = imgData.data;
-        const output = new Uint8ClampedArray(w * h * 4);
-        const intImg = new Int32Array(w * h);
-        const s = Math.floor(w / 8), t = 15;
-
-        for (let y = 0; y < h; y++) {
-            let sum = 0;
-            for (let x = 0; x < w; x++) {
-                sum += input[(y * w + x) * 4 + chIdx];
-                intImg[y * w + x] = (y > 0 ? intImg[(y - 1) * w + x] : 0) + sum;
-            }
-        }
-
-        for (let y = 0; y < h; y++) {
-            for (let x = 0; x < w; x++) {
-                const x1 = Math.max(x - s, 0), x2 = Math.min(x + s, w - 1);
-                const y1 = Math.max(y - s, 0), y2 = Math.min(y + s, h - 1);
-                const count = (x2 - x1) * (y2 - y1);
-                const sum = intImg[y2 * w + x2] - intImg[y1 * w + x2] - intImg[y2 * w + x1] + intImg[y1 * w + x1];
-                const val = input[(y * w + x) * 4 + chIdx];
-                const res = (val * count < sum * (100 - t) / 100) ? 0 : 255;
-                const idx = (y * w + x) * 4;
-                output[idx] = output[idx+1] = output[idx+2] = res; output[idx+3] = 255;
-            }
-        }
-        return output;
-    },
-
-    lockChannel(ch, data) {
-        if (this.state.locked[ch.toLowerCase()]) return;
-        
-        this.state.locked[ch.toLowerCase()] = true;
-        this.state.results[ch.toLowerCase()] = data;
-        
-        // UI feedback
-        this.playBeep();
-        this.flash();
-        this.els.viewfinder.classList.add('locked');
-        setTimeout(() => this.els.viewfinder.classList.remove('locked'), 300);
-
-        // Start timer on first found channel
-        if (!this.state.timerStarted) {
-            this.state.timerStarted = true;
-            this.state.firstChannelFound = ch;
-            
-            // Set timer duration based on first channel
-            if (ch === 'B') {
-                this.state.timerDuration = 4000; // 4 seconds for Blue first
-            } else {
-                this.state.timerDuration = 10000; // 10 seconds for R or G first
-            }
-            
-            this.state.timerStartTime = Date.now();
-            this.els.timerBar.style.display = 'block';
-            
-            this.state.timerInterval = setInterval(() => this.updateTimer(), 50);
-        }
-
-        // Check if all found
-        if (this.state.locked.r && this.state.locked.g && this.state.locked.b) {
-            this.completeScanning();
-        }
-    },
-
-    updateTimer() {
-        const elapsed = Date.now() - this.state.timerStartTime;
-        const progress = Math.min(100, (elapsed / this.state.timerDuration) * 100);
-        this.els.timerProgress.style.width = progress + '%';
-        
-        if (elapsed >= this.state.timerDuration) {
-            this.completeScanning();
-        }
-    },
-
-    completeScanning() {
-        if (this.state.completed) return;
-        this.state.completed = true;
-        this.state.scanning = false;
-        
-        if (this.state.timerInterval) {
-            clearInterval(this.state.timerInterval);
-        }
-        
-        // Hide camera and controls
-        this.els.viewport.style.display = 'none';
-        this.els.controls.style.display = 'none';
-        this.els.timerBar.style.display = 'none';
-        
-        // Show results
-        this.showResults();
-    },
-
-    showResults() {
-        const results = this.state.results;
-        const locked = this.state.locked;
-        
-        // Count found channels
-        const foundChannels = [];
-        if (locked.r) foundChannels.push('r');
-        if (locked.g) foundChannels.push('g');
-        if (locked.b) foundChannels.push('b');
-        
-        const isSingleBlue = foundChannels.length === 1 && locked.b;
-        
-        let html = '';
-        
-        if (isSingleBlue) {
-            // Single large field for Blue only
-            html = `
-                <div class="scan-result-item single">
-                    <div class="scan-result-header">
-                        <span class="scan-result-label blue">${translations[currentLang].channel_blue}</span>
-                        <div class="scan-indicator-dot b active"></div>
-                    </div>
-                    <div class="scan-result-content">${this.escapeHtml(results.b)}</div>
-                </div>
-            `;
-        } else {
-            // Vertical fields for multiple channels
-            const channelOrder = [
-                { key: 'r', label: translations[currentLang].channel_red, class: 'red' },
-                { key: 'g', label: translations[currentLang].channel_green, class: 'green' },
-                { key: 'b', label: translations[currentLang].channel_blue, class: 'blue' }
-            ];
-            
-            channelOrder.forEach(ch => {
-                if (locked[ch.key]) {
-                    html += `
-                        <div class="scan-result-item">
-                            <div class="scan-result-header">
-                                <span class="scan-result-label ${ch.class}">${ch.label}</span>
-                                <div class="scan-indicator-dot ${ch.key} active"></div>
-                            </div>
-                            <div class="scan-result-content">${this.escapeHtml(results[ch.key])}</div>
-                        </div>
-                    `;
-                }
-            });
-        }
-        
-        this.els.resultsContainer.innerHTML = html;
-        this.els.resultsContainer.style.display = 'flex';
-    },
-
-    escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    },
-
-    flash() {
-        const f = this.els.flash;
-        f.classList.add('active');
-        setTimeout(() => f.classList.remove('active'), 300);
-    },
-
-    playBeep() {
-        try {
-            const ctx = new (window.AudioContext || window.webkitAudioContext)();
-            const o = ctx.createOscillator();
-            const g = ctx.createGain();
-            o.connect(g); g.connect(ctx.destination);
-            o.frequency.value = 880; o.type = "square";
-            g.gain.setValueAtTime(0.1, ctx.currentTime);
-            g.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.1);
-            o.start(); o.stop(ctx.currentTime + 0.1);
-        } catch(e){}
-    },
-
-    async startCamera() {
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ 
-                video: { facingMode: "environment", width: { ideal: 1280 } } 
-            });
-            this.els.video.srcObject = stream;
-            this.els.video.play();
-            this.els.video.style.display = 'block';
-            this.els.freeze.style.display = 'none';
-            
-            this.state.scanning = true;
-            this.processLoop();
-        } catch (e) { 
-            alert("Camera Error: " + e); 
-        }
-    },
-
-    handleFile(e) {
-        const file = e.target.files[0]; 
-        if(!file) return;
-        
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-            const img = new Image();
-            img.onload = () => {
-                this.els.freeze.width = 512; 
-                this.els.freeze.height = 512;
-                const s = Math.min(img.width, img.height);
-                const sx = (img.width - s)/2, sy = (img.height - s)/2;
-                this.els.fCtx.drawImage(img, sx, sy, s, s, 0, 0, 512, 512);
-                
-                this.els.freeze.style.display = 'block';
-                this.els.video.style.display = 'none';
-
-                this.state.scanning = true;
-                this.processLoop();
-            };
-            img.src = ev.target.result;
-        };
-        reader.readAsDataURL(file);
-    },
-
-    processLoop() {
-        if (!this.state.scanning) return;
-
-        let sourceData = null;
-        
-        if (this.els.video.style.display !== 'none' && this.els.video.readyState >= 2) {
-            this.els.ctx.drawImage(this.els.video, 0, 0, 512, 512);
-            sourceData = this.els.ctx.getImageData(0, 0, 512, 512);
-        } else if (this.els.freeze.style.display !== 'none') {
-            sourceData = this.els.fCtx.getImageData(0, 0, 512, 512);
-        }
-
-        if (sourceData) {
-            // Process channels R, G, B
-            const channels = [
-                { name: 'R', idx: 0 },
-                { name: 'G', idx: 1 },
-                { name: 'B', idx: 2 }
-            ];
-            
-            for (const ch of channels) {
-                if (!this.state.locked[ch.name.toLowerCase()]) {
-                    const mono = this.applyBradleyStandard(sourceData, ch.idx);
-                    const code = jsQR(mono, 512, 512, { inversionAttempts: "attemptBoth" });
-                    
-                    if (code) {
-                        this.lockChannel(ch.name, code.data);
-                        if (this.state.completed) return; // Stop if completed
-                    }
-                }
-            }
-        }
-
-        requestAnimationFrame(() => this.processLoop());
-    }
-};
-
-// ==========================================
-// INITIALIZATION
-// ==========================================
-document.addEventListener('DOMContentLoaded', () => {
-    ScannerEngine.init();
-    setLanguage('uk');
-});
-
-const openScanner = () => ScannerEngine.open();
-const closeScanner = () => ScannerEngine.close();
-
-</script>
 </body>
 </html>
