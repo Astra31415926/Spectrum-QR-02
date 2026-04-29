@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Spectrum-QR</title>
     
-    <!-- Fonts -->
+    <!-- Шрифты -->
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     
-    <!-- Stylesheets -->
+    <!-- Стили -->
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/mobile.css">
 </head>
@@ -16,25 +16,24 @@
 
 <div id="app">
     
-    <!-- TOP NAVIGATION -->
+    <!-- ШАПКА -->
     <header class="nav-bar">
-        <div class="nav-btn" id="btn-back" style="visibility:hidden;" onclick="App.navBack()">
-            <span style="font-size: 24px;">←</span>
+        <div class="nav-btn" id="btn-back" onclick="App.navBack()">
+            <span>←</span>
         </div>
         <h1 class="app-title">Spectrum-QR</h1>
         <div class="nav-btn" onclick="App.toggleMenu()">
-            <span style="font-size: 24px;">☰</span>
+            <span>☰</span>
         </div>
     </header>
 
-    <!-- SCREEN CONTAINER -->
+    <!-- КОНТЕЙНЕР ЭКРАНОВ -->
     <main class="screen-container">
         
-        <!-- SCREEN: MAIN -->
+        <!-- ЭКРАН: ГЛАВНЫЙ -->
         <div id="scr-main" class="screen active">
-            <div class="main-content">
+            <div class="center-box">
                 <p class="main-text">Ornamental QR codes — visual patterns that encode data.</p>
-                <p class="main-subtext">Multi-layer color channels allow increased information capacity beyond standard QR.</p>
                 <div class="btn-group">
                     <button class="btn-retro btn-create" onclick="App.navTo('create-opt')">+ Create</button>
                     <button class="btn-retro btn-scan" onclick="App.navTo('scan-choice')">Scan</button>
@@ -42,7 +41,7 @@
             </div>
         </div>
 
-        <!-- SCREEN: CREATE OPTIONS -->
+        <!-- ЭКРАН: ВЫБОР СОЗДАНИЯ -->
         <div id="scr-create-opt" class="screen">
             <div class="center-box">
                 <button class="btn-retro w-full" onclick="App.navTo('gen-ornament')">Ornament QR</button>
@@ -50,7 +49,7 @@
             </div>
         </div>
 
-        <!-- SCREEN: GENERATOR ORNAMENT -->
+        <!-- ЭКРАН: ГЕНЕРАТОР ORNAMENT -->
         <div id="scr-gen-ornament" class="screen gen-layout">
             <div class="qr-zone">
                 <div class="qr-frame" onclick="App.saveImage('ornament')">
@@ -63,15 +62,14 @@
             </div>
         </div>
 
-        <!-- SCREEN: GENERATOR 3D -->
+        <!-- ЭКРАН: ГЕНЕРАТОР 3D -->
         <div id="scr-gen-3d" class="screen gen-layout">
             <div class="qr-zone">
                 <div class="qr-frame" onclick="App.saveImage('3d')">
                     <canvas id="canvas-3d" width="512" height="512"></canvas>
                 </div>
             </div>
-            <!-- Input zone uses column-reverse on mobile to keep Blue visible -->
-            <div class="input-zone" id="input-zone-3d">
+            <div class="input-zone">
                 <textarea id="input-r" class="text-input red" placeholder="RED Channel" oninput="Engine3D.handleInput()"></textarea>
                 <textarea id="input-g" class="text-input green" placeholder="GREEN Channel" oninput="Engine3D.handleInput()"></textarea>
                 <textarea id="input-b" class="text-input blue" placeholder="BLUE Channel" oninput="Engine3D.handleInput()"></textarea>
@@ -79,10 +77,13 @@
             </div>
         </div>
 
-        <!-- SCREEN: SCAN CHOICE (New Logic) -->
+        <!-- ЭКРАН: ВЫБОР СКАНЕРА (НОВАЯ ЛОГИКА) -->
         <div id="scr-scan-choice" class="screen">
             <div class="center-box">
                 <h2 class="screen-title">Select Source</h2>
+                <!-- Блок для вывода результата -->
+                <div id="scan-results" class="scan-result-box"></div>
+                
                 <div class="btn-group-vertical">
                     <button class="btn-retro btn-scan" onclick="ScannerEngine.startCamera()">Camera</button>
                     <button class="btn-retro" onclick="document.getElementById('file-input-scan').click()">Gallery</button>
@@ -91,7 +92,7 @@
             </div>
         </div>
 
-        <!-- SCREEN: PLACEHOLDERS (Gallery, History, Tech, Contacts) -->
+        <!-- ЭКРАНЫ: ИНФО СТРАНИЦЫ -->
         <div id="scr-gallery" class="screen"><div class="center-box">Gallery Coming Soon</div></div>
         <div id="scr-history" class="screen"><div class="center-box">History Info</div></div>
         <div id="scr-tech" class="screen"><div class="center-box">Technology Info</div></div>
@@ -99,7 +100,7 @@
 
     </main>
 
-    <!-- BOTTOM NAVIGATION -->
+    <!-- НИЖНЕЕ МЕНЮ -->
     <footer class="bottom-nav" id="bottom-nav">
         <div class="nav-btn" onclick="App.navTo('gallery')">
             <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
@@ -119,32 +120,8 @@
         </div>
     </footer>
 
-    <!-- SCANNER OVERLAY -->
-    <div id="scanner-overlay" class="overlay">
-        <header class="nav-bar">
-            <div class="nav-btn" onclick="ScannerEngine.close()"><span style="font-size:24px;">✕</span></div>
-            <h1 class="font-bold">SCANNER</h1>
-            <div style="width:40px;"></div>
-        </header>
-        
-        <div class="scan-viewport" id="scan-viewport">
-            <video id="video-feed" autoplay playsinline muted></video>
-            <canvas id="freeze-frame"></canvas>
-            <div class="viewfinder-box" id="viewfinder-corners">
-                <div class="corner tl"></div><div class="corner tr"></div>
-                <div class="corner bl"></div><div class="corner br"></div>
-            </div>
-            <div id="flash-fx" class="flash-fx"></div>
-        </div>
-        
-        <div class="scan-panel" id="scan-panel">
-            <!-- Scan results will be injected here by JS -->
-            <div class="scan-results-container" id="scan-results"></div>
-        </div>
-    </div>
-
-    <!-- MENU OVERLAY -->
-    <div id="menu-overlay" class="overlay menu-style">
+    <!-- МЕНЮ (СБРОС) -->
+    <div id="menu-overlay" class="overlay menu-style hidden">
         <div class="menu-close" onclick="App.toggleMenu()">✕</div>
         <div class="menu-header">Menu</div>
         <div class="menu-section">
@@ -154,11 +131,11 @@
 
 </div>
 
-<!-- Dependencies -->
+<!-- === ВАЖНО: ПОДКЛЮЧАЕМ БИБЛИОТЕКИ ЗДЕСЬ === -->
 <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
 
-<!-- Logic Scripts -->
+<!-- СКРИПТЫ ЛОГИКИ -->
 <script src="js/engine-ornament.js"></script>
 <script src="js/engine-3d.js"></script>
 <script src="js/main.js"></script>
