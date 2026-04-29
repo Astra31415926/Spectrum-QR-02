@@ -1,7 +1,6 @@
-/* js/engine-3d.js */
+/* === js/engine-3d.js === */
 
 const Engine3D = (function() {
-    
     return {
         handleInput: function() {
             const r = document.getElementById('input-r').value;
@@ -44,7 +43,7 @@ const Engine3D = (function() {
                     for(let r=0; r<qr.getModuleCount(); r++) 
                         for(let c=0; c<qr.getModuleCount(); c++) 
                             if(qr.isDark(r, c)) ctx.fillRect(c*mod, r*mod, mod, mod);
-                } catch(e) { console.error(e); }
+                } catch(e) {}
             });
             ctx.globalCompositeOperation = "source-over";
         }
