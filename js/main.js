@@ -1,84 +1,75 @@
-/* === js/main.js (Исправленная версия) === */
+/* === js/main.js === */
+
+// --- 1. NAVIGATION & APP LOGIC ---
 
 const App = {
-    current: 'scr-main', // Текущий экран (хранится полный ID)
-    history: ['scr-main'], // История навигации
+    current: 'scr-main', // Храним полный ID текущего экрана
+    history: ['scr-main'],
 
-    // 1. Инициализация при загрузке
+    // Инициализация при запуске
     init: function() {
-        // Скрытие всех экранов и показ только main
-        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-        const mainScreen = document.getElementById('scr-main');
-        if (mainScreen) mainScreen.classList.add('active');
+        // Принудительный переход на главный экран при старте
+        this.navTo('main'); 
         
-        // Скрытие стрелки назад
-        const backBtn = document.getElementById('btn-back');
-        if(backBtn) backBtn.style.visibility = 'hidden';
+        // Инициализация сканера (привязка элементов)
+        ScannerEngine.init();
         
-        // Начальное состояние меню
-        this.toggleBottomNav('main');
-        
-        // Проверка кнопок
-        this.checkSaveState();
+        // Навешиваем слушатели на инпуты для проверки кнопки Save
+        this.bindInputListeners();
     },
 
-    // Вспомогательная функция для управления нижним меню
-    toggleBottomNav: function(screenId) {
-        const nav = document.getElementById('bottom-nav'); // Исправленный ID
-        if (!nav) return;
-
-        // Скрываем, если в ID есть 'gen' или 'create'
-        if (screenId.includes('gen') || screenId.includes('create')) {
-            nav.style.display = 'none';
-        } else {
-            nav.style.display = 'flex'; // Восстанавливаем, если это не режим генерации
-        }
-    },
-
-    // 2. Навигация к экрану
+    // Навигация к экрану
     navTo: function(screenId) {
-        // --- ИСПРАВЛЕНИЕ 1: Авто-добавление приставки scr- ---
+        // 1. Авто-добавление приставки scr-
         let targetId = screenId;
         if (!screenId.startsWith('scr-')) {
             targetId = 'scr-' + screenId;
         }
 
-        // Снимаем active со всех экранов
-        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        // 2. Скрываем ВСЕ экраны (класс .screen)
+        const screens = document.querySelectorAll('.screen');
+        screens.forEach(s => s.classList.remove('active'));
 
-        // Вешаем active на целевой экран
-        const target = document.getElementById(targetId);
-        if (target) {
-            target.classList.add('active');
+        // 3. Показываем только целевой экран
+        const targetScreen = document.getElementById(targetId);
+        if (targetScreen) {
+            targetScreen.classList.add('active');
+            this.current = targetId;
+            
+            // Добавляем в историю (если это не повторный переход)
+            if (this.history[this.history.length - 1] !== targetId) {
+                this.history.push(targetId);
+            }
         } else {
             console.error('Экран не найден:', targetId);
             return;
         }
 
-        // Управление историей
-        if (targetId !== this.current) {
-            this.history.push(this.current);
-            this.current = targetId;
-        }
-
-        // Управление стрелкой "Назад"
+        // 4. Управление кнопкой "Назад"
         const backBtn = document.getElementById('btn-back');
         if (backBtn) {
             backBtn.style.visibility = (targetId === 'scr-main') ? 'hidden' : 'visible';
         }
 
-        // --- ИСПРАВЛЕНИЕ 2 И 3: Принудительное скрытие меню ---
-        // Вызываем функцию скрытия для текущего screenId
-        this.toggleBottomNav(screenId); // Передаем исходный ID для проверки ключевых слов
+        // 5. Управление нижним меню (bottom-nav)
+        // Скрываем, если в ID есть "gen" или "scan"
+        const bottomNav = document.getElementById('bottom-nav');
+        if (bottomNav) {
+            if (targetId.includes('gen') || targetId.includes('scan')) {
+                bottomNav.style.display = 'none';
+            } else {
+                bottomNav.style.display = 'flex';
+            }
+        }
 
+        // 6. Проверка состояния кнопок сохранения
         this.checkSaveState();
     },
 
-    // 3. Кнопка "Назад"
+    // Кнопка "Назад"
     navBack: function() {
-        // Если история пуста или в ней только главный экран
         if (this.history.length <= 1) {
-            this.navTo('main'); // Гарантированный возврат на главный
+            this.navTo('main');
             this.history = ['scr-main']; // Сброс истории
             return;
         }
@@ -88,65 +79,177 @@ const App = {
         // Получаем предыдущий
         const prev = this.history[this.history.length - 1];
         
-        // Навигация
-        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        // Навигация (без записи в историю)
+        const screens = document.querySelectorAll('.screen');
+        screens.forEach(s => s.classList.remove('active'));
         
         const target = document.getElementById(prev);
         if (target) {
             target.classList.add('active');
             this.current = prev;
 
-            // Обновляем видимость стрелки
+            // Обновляем UI
             const backBtn = document.getElementById('btn-back');
-            if (backBtn) {
-                backBtn.style.visibility = (prev === 'scr-main') ? 'hidden' : 'visible';
-            }
+            if (backBtn) backBtn.style.visibility = (prev === 'scr-main') ? 'hidden' : 'visible';
 
-            // Восстанавливаем меню, если мы ушли с экранов генерации
-            this.toggleBottomNav(prev);
-        } else {
-            // Fallback на случай ошибки
-            this.navTo('main');
+            const bottomNav = document.getElementById('bottom-nav');
+            if (bottomNav) {
+                 if (prev.includes('gen') || prev.includes('scan')) {
+                    bottomNav.style.display = 'none';
+                } else {
+                    bottomNav.style.display = 'flex';
+                }
+            }
         }
     },
 
-    // 4. Логика кнопки Save
+    // Проверка активности кнопки Save (для 3D и Ornament)
     checkSaveState: function() {
-        // Проверка для 3D режима
+        // Логика для 3D
         const saveBtn3D = document.getElementById('btn-save-3d');
-        const screen3D = document.getElementById('scr-gen-3d');
-
-        if (screen3D && screen3D.classList.contains('active')) {
-            const valR = document.getElementById('input-r').value;
-            const valG = document.getElementById('input-g').value;
-            const valB = document.getElementById('input-b').value;
-
-            if(saveBtn3D) {
-                saveBtn3D.disabled = !(valR && valG && valB);
-            }
+        if (document.getElementById('scr-gen-3d').classList.contains('active')) {
+            const r = document.getElementById('input-r').value;
+            const g = document.getElementById('input-g').value;
+            const b = document.getElementById('input-b').value;
+            if(saveBtn3D) saveBtn3D.disabled = !(r && g && b);
         }
 
-        // Проверка для Ornament режима
+        // Логика для Ornament
         const saveBtnOrn = document.getElementById('btn-save-orn');
-        const screenOrn = document.getElementById('scr-gen-ornament');
-
-        if (screenOrn && screenOrn.classList.contains('active')) {
-            const valText = document.getElementById('input-ornament').value;
-            if(saveBtnOrn) {
-                saveBtnOrn.disabled = !valText;
-            }
+        if (document.getElementById('scr-gen-ornament').classList.contains('active')) {
+            const val = document.getElementById('input-ornament').value;
+            if(saveBtnOrn) saveBtnOrn.disabled = !val;
         }
+    },
+
+    bindInputListeners: function() {
+        // Слушатели для проверки кнопки Save при вводе
+        const inputs3D = ['input-r', 'input-g', 'input-b'];
+        inputs3D.forEach(id => {
+            const el = document.getElementById(id);
+            if(el) el.addEventListener('input', () => this.checkSaveState());
+        });
+
+        const inputOrn = document.getElementById('input-ornament');
+        if(inputOrn) inputOrn.addEventListener('input', () => this.checkSaveState());
     }
 };
 
-// Запуск
+// --- 2. SCANNER LOGIC ---
+
+const ScannerEngine = {
+    els: {},
+    
+    init: function() {
+        this.els = {
+            overlay: document.getElementById('scanner-overlay'),
+            video: document.getElementById('video-feed'),
+            freeze: document.getElementById('freeze-frame'),
+            results: document.getElementById('scan-results'),
+            flash: document.getElementById('flash-fx')
+        };
+    },
+
+    // Запуск камеры
+    startCamera: async function() {
+        // Открываем оверлей сканера
+        if(this.els.overlay) this.els.overlay.style.display = 'flex';
+        
+        // Навигация на "скрытый" экран сканирования, чтобы скрыть меню
+        App.navTo('scan-active'); 
+
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+            if(this.els.video) {
+                this.els.video.srcObject = stream;
+                this.els.video.play();
+            }
+        } catch(e) {
+            alert("Camera Error: " + e);
+            this.close();
+        }
+    },
+
+    // Обработка файла (Gallery)
+    handleFile: function(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        
+        reader.onload = (ev) => {
+            const img = new Image();
+            img.onload = () => {
+                // Создаем временный canvas для сканирования
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                
+                // Ограничиваем размер для производительности
+                const maxSize = 1024;
+                let w = img.width;
+                let h = img.height;
+                if (w > maxSize || h > maxSize) {
+                    const ratio = Math.min(maxSize / w, maxSize / h);
+                    w *= ratio;
+                    h *= ratio;
+                }
+                
+                canvas.width = w;
+                canvas.height = h;
+                ctx.drawImage(img, 0, 0, w, h);
+
+                // Получаем данные для jsQR
+                const imageData = ctx.getImageData(0, 0, w, h);
+                
+                // Сканируем
+                const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                    inversionAttempts: "dontInvert"
+                });
+
+                // Обработка результата
+                if (code) {
+                    this.showResult(code.data);
+                } else {
+                    alert("QR-код не найден на изображении.");
+                }
+            };
+            img.src = ev.target.result;
+        };
+        reader.readAsDataURL(file);
+    },
+
+    showResult: function(text) {
+        // Показываем результат в UI
+        if(this.els.results) {
+            this.els.results.innerText = text;
+        }
+
+        // Визуальный фидбек
+        if(this.els.flash) {
+            this.els.flash.classList.add('active');
+            setTimeout(() => this.els.flash.classList.remove('active'), 200);
+        }
+
+        // КРИТИЧЕСКИ ВАЖНО: Переход на экран результата/выбора
+        // Мы показываем оверлей с результатом и меняем фон на scan-choice
+        if(this.els.overlay) this.els.overlay.style.display = 'flex';
+        
+        // Навигация на scr-scan-choice (как требует ТЗ)
+        // Это скроет меню, так как в ID есть "scan"
+        App.navTo('scan-choice');
+    },
+
+    close: function() {
+        if(this.els.video && this.els.video.srcObject) {
+            this.els.video.srcObject.getTracks().forEach(track => track.stop());
+        }
+        if(this.els.overlay) this.els.overlay.style.display = 'none';
+        App.navTo('main');
+    }
+};
+
+// --- BOOTSTRAP ---
+
 document.addEventListener('DOMContentLoaded', () => {
     App.init();
-});
-
-// Слушатели ввода
-document.addEventListener('input', (e) => {
-    if (e.target.id === 'input-r' || e.target.id === 'input-g' || e.target.id === 'input-b' || e.target.id === 'input-ornament') {
-        App.checkSaveState();
-    }
 });
