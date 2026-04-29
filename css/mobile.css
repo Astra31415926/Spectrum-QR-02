@@ -1,41 +1,18 @@
 /* === css/mobile.css === */
-
 @media (max-width: 768px) {
-    
-    /* Поля ввода строго друг под другом */
-    .input-zone {
-        display: flex;
-        flex-direction: column;
-        gap: 15px;
-        padding: 20px;
-    }
-
-    /* ГЛАВНОЕ: Скрытие нижнего меню в режиме генерации */
-    /* Используем селектор :has() (поддерживается современными мобильными браузерами) */
-    /* Если браузер старый, можно добавить класс .no-menu к body через JS, но этот CSS решает задачу элегантно */
+    /* Убираем меню в генераторах (дублируем JS логику для надежности) */
     #app:has(#scr-gen-ornament.active) #bottom-nav,
     #app:has(#scr-gen-3d.active) #bottom-nav {
         display: none !important;
     }
 
-    /* Размер шрифта 16px для предотвращения автозума */
+    /* Размер шрифта 16px */
     .text-input {
         font-size: 16px;
-        padding: 12px;
-        border: 1px solid #333;
-        background: #111;
-        color: #fff;
-        width: 100%;
-    }
-    
-    /* Дополнительные удобства для мобильных */
-    .qr-zone {
-        height: 35vh;
-        min-height: 180px;
     }
 
-    .btn-retro {
-        padding: 12px 15px;
-        font-size: 16px;
+    /* Поля ввода строго друг под другом */
+    .input-zone {
+        flex-direction: column;
     }
 }
