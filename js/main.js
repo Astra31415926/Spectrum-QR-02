@@ -1,95 +1,132 @@
-/* === js/main.js === */
+/* === js/main.js (Исправленная версия) === */
 
 const App = {
-    current: 'main', // Текущий экран
-    history: ['main'], // История навигации
+    current: 'scr-main', // Текущий экран (хранится полный ID)
+    history: ['scr-main'], // История навигации
 
     // 1. Инициализация при загрузке
     init: function() {
-        // Добавляем класс active только экрану scr-main
+        // Скрытие всех экранов и показ только main
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-        document.getElementById('scr-main').classList.add('active');
+        const mainScreen = document.getElementById('scr-main');
+        if (mainScreen) mainScreen.classList.add('active');
         
-        // Скрываем стрелку "Назад" на главном экране
-        document.getElementById('btn-back').style.visibility = 'hidden';
+        // Скрытие стрелки назад
+        const backBtn = document.getElementById('btn-back');
+        if(backBtn) backBtn.style.visibility = 'hidden';
         
-        // Запускаем проверку кнопки Save (если применимо)
+        // Начальное состояние меню
+        this.toggleBottomNav('main');
+        
+        // Проверка кнопок
         this.checkSaveState();
+    },
+
+    // Вспомогательная функция для управления нижним меню
+    toggleBottomNav: function(screenId) {
+        const nav = document.getElementById('bottom-nav'); // Исправленный ID
+        if (!nav) return;
+
+        // Скрываем, если в ID есть 'gen' или 'create'
+        if (screenId.includes('gen') || screenId.includes('create')) {
+            nav.style.display = 'none';
+        } else {
+            nav.style.display = 'flex'; // Восстанавливаем, если это не режим генерации
+        }
     },
 
     // 2. Навигация к экрану
     navTo: function(screenId) {
-        // Снимаем active со всех экранов
-        const screens = document.querySelectorAll('.screen');
-        screens.forEach(s => s.classList.remove('active'));
+        // --- ИСПРАВЛЕНИЕ 1: Авто-добавление приставки scr- ---
+        let targetId = screenId;
+        if (!screenId.startsWith('scr-')) {
+            targetId = 'scr-' + screenId;
+        }
 
-        // Вешаем active на нужный экран
-        const target = document.getElementById(screenId);
+        // Снимаем active со всех экранов
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+
+        // Вешаем active на целевой экран
+        const target = document.getElementById(targetId);
         if (target) {
             target.classList.add('active');
+        } else {
+            console.error('Экран не найден:', targetId);
+            return;
         }
 
         // Управление историей
-        if (screenId !== this.current) {
+        if (targetId !== this.current) {
             this.history.push(this.current);
-            this.current = screenId;
+            this.current = targetId;
         }
 
-        // Показываем стрелку "Назад", если мы не на главном
-        document.getElementById('btn-back').style.visibility = 
-            (screenId === 'scr-main') ? 'hidden' : 'visible';
+        // Управление стрелкой "Назад"
+        const backBtn = document.getElementById('btn-back');
+        if (backBtn) {
+            backBtn.style.visibility = (targetId === 'scr-main') ? 'hidden' : 'visible';
+        }
 
-        // Проверяем состояние кнопок при переходе
+        // --- ИСПРАВЛЕНИЕ 2 И 3: Принудительное скрытие меню ---
+        // Вызываем функцию скрытия для текущего screenId
+        this.toggleBottomNav(screenId); // Передаем исходный ID для проверки ключевых слов
+
         this.checkSaveState();
     },
 
     // 3. Кнопка "Назад"
     navBack: function() {
+        // Если история пуста или в ней только главный экран
         if (this.history.length <= 1) {
-            // Если истории нет, идем на главную
-            this.navTo('scr-main');
+            this.navTo('main'); // Гарантированный возврат на главный
+            this.history = ['scr-main']; // Сброс истории
             return;
         }
 
         // Удаляем текущий экран из истории
         this.history.pop();
-        // Берем предыдущий
+        // Получаем предыдущий
         const prev = this.history[this.history.length - 1];
         
-        // Навигируем назад
-        const screens = document.querySelectorAll('.screen');
-        screens.forEach(s => s.classList.remove('active'));
+        // Навигация
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
         
         const target = document.getElementById(prev);
         if (target) {
             target.classList.add('active');
             this.current = prev;
-        }
 
-        // Скрываем стрелку на главном
-        document.getElementById('btn-back').style.visibility = 
-            (prev === 'scr-main') ? 'hidden' : 'visible';
+            // Обновляем видимость стрелки
+            const backBtn = document.getElementById('btn-back');
+            if (backBtn) {
+                backBtn.style.visibility = (prev === 'scr-main') ? 'hidden' : 'visible';
+            }
+
+            // Восстанавливаем меню, если мы ушли с экранов генерации
+            this.toggleBottomNav(prev);
+        } else {
+            // Fallback на случай ошибки
+            this.navTo('main');
+        }
     },
 
-    // 4. Проверка активности кнопки Save
+    // 4. Логика кнопки Save
     checkSaveState: function() {
-        // Логика для 3D режима
+        // Проверка для 3D режима
         const saveBtn3D = document.getElementById('btn-save-3d');
         const screen3D = document.getElementById('scr-gen-3d');
 
-        // Если мы на экране 3D
         if (screen3D && screen3D.classList.contains('active')) {
             const valR = document.getElementById('input-r').value;
             const valG = document.getElementById('input-g').value;
             const valB = document.getElementById('input-b').value;
 
-            // Активна только если все 3 поля заполнены
             if(saveBtn3D) {
                 saveBtn3D.disabled = !(valR && valG && valB);
             }
         }
 
-        // Логика для Ornament режима (если нужно)
+        // Проверка для Ornament режима
         const saveBtnOrn = document.getElementById('btn-save-orn');
         const screenOrn = document.getElementById('scr-gen-ornament');
 
@@ -102,17 +139,14 @@ const App = {
     }
 };
 
-// Запуск приложения
+// Запуск
 document.addEventListener('DOMContentLoaded', () => {
     App.init();
 });
 
-// Слушатели ввода для проверки кнопки Save (оптимизация)
+// Слушатели ввода
 document.addEventListener('input', (e) => {
-    if (e.target.id === 'input-r' || e.target.id === 'input-g' || e.target.id === 'input-b') {
-        App.checkSaveState();
-    }
-    if (e.target.id === 'input-ornament') {
+    if (e.target.id === 'input-r' || e.target.id === 'input-g' || e.target.id === 'input-b' || e.target.id === 'input-ornament') {
         App.checkSaveState();
     }
 });
