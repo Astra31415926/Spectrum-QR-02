@@ -1,214 +1,97 @@
-/* --- Variables & Reset --- */
+/* === css/style.css === */
+
+/* Импорт шрифта Orbitron */
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+
 :root {
-    --primary-orange: #FF6200;
-    --primary-green: #00FF9D;
-    --metal-dark: #121212;
-    --rust: #4a2c2a;
-    --text-main: #e0e0e0;
+    --brass-color: #B5A642;      /* Цвет латуни */
+    --brass-dark: #8a7d2a;
+    --bg-color: #000000;
+    --text-color: #ffffff;
 }
 
-* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    -webkit-tap-highlight-color: transparent;
+}
 
-html, body {
-    margin: 0; padding: 0;
-    height: 100%; width: 100%;
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: 'Orbitron', sans-serif; /* Основной шрифт */
+    height: 100vh;
+    width: 100%;
     overflow: hidden;
-    background-color: #0a0908;
-    font-family: 'Share Tech Mono', monospace;
-    color: var(--text-main);
-}
-
-/* --- Background Texture --- */
-body::before {
-    content: "";
-    position: fixed; inset: 0;
-    background: 
-        radial-gradient(ellipse at 30% 20%, rgba(35, 28, 25, 0.6) 0%, transparent 50%),
-        radial-gradient(ellipse at 70% 80%, rgba(40, 32, 28, 0.5) 0%, transparent 45%),
-        linear-gradient(180deg, #0d0b09 0%, #0a0908 50%, #080706 100%);
-    pointer-events: none; z-index: 0;
-}
-
-body::after {
-    content: "";
-    position: fixed; inset: 0;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-    opacity: 0.04; pointer-events: none; z-index: 0; mix-blend-mode: overlay;
 }
 
 #app {
-    position: relative; z-index: 1;
     height: 100%;
     display: flex;
     flex-direction: column;
-}
-
-/* --- Navigation --- */
-.nav-bar {
-    height: 60px; min-height: 60px;
-    background: rgba(15, 13, 11, 0.92);
-    backdrop-filter: blur(12px);
-    border-bottom: 1px solid rgba(60, 50, 45, 0.4);
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 0 16px; z-index: 100;
-}
-
-.app-title {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 20px;
-    font-weight: 900;
-    letter-spacing: 1px;
-    color: #fff;
-    text-transform: uppercase;
-}
-
-.bottom-nav {
-    height: 70px; min-height: 70px;
-    border-top: 1px solid rgba(60, 50, 45, 0.4);
-    background: rgba(10, 9, 8, 0.95);
-    display: flex; justify-content: space-around; align-items: center;
-    z-index: 100;
-    transition: display 0.2s;
-}
-
-.nav-btn {
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    color: #888; font-size: 10px; gap: 4px; cursor: pointer; transition: 0.2s;
-}
-.nav-btn:active, .nav-btn.active { color: var(--primary-orange); }
-.nav-icon { width: 24px; height: 24px; }
-
-/* --- Layout --- */
-.screen-container {
-    flex: 1;
     position: relative;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
 }
 
+/* --- Логика экранов --- */
 .screen {
-    position: absolute; inset: 0;
-    display: none;
+    display: none; /* По умолчанию скрыты */
     flex-direction: column;
     height: 100%;
-    overflow-y: auto;
+    width: 100%;
 }
-.screen.active { display: flex; }
 
-.main-content, .center-box {
+.screen.active {
+    display: block; /* Активный экран показан */
+}
+
+/* --- Кнопки btn-retro --- */
+.btn-retro {
+    background: transparent;
+    border: 2px solid var(--brass-color); /* Рамка цвета латуни */
+    color: var(--brass-color);
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    font-size: 18px;
+    padding: 15px 20px; /* Большие, без лишних отступов */
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: all 0.3s ease;
+    outline: none;
+}
+
+.btn-retro:active {
+    background: var(--brass-color);
+    color: #000;
+}
+
+.btn-retro:disabled {
+    border-color: #333;
+    color: #333;
+    pointer-events: none;
+}
+
+/* Центровка контента на главном экране */
+.center-box {
     flex: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     padding: 20px;
+    gap: 20px;
     text-align: center;
 }
 
-.main-text { font-size: 14px; max-width: 280px; line-height: 1.6; margin-bottom: 12px; opacity: 0.9; }
-.main-subtext { font-size: 12px; max-width: 280px; line-height: 1.5; margin-bottom: 32px; opacity: 0.7; }
+.w-full {
+    width: 100%;
+    max-width: 300px;
+}
 
-.btn-group { display: flex; gap: 16px; width: 100%; max-width: 320px; }
-.btn-group-vertical { display: flex; flex-direction: column; gap: 16px; width: 100%; max-width: 260px; }
-.w-full { width: 100%; }
-
-/* --- Generator Layout --- */
-.gen-layout {
-    flex: 1;
+.btn-group {
     display: flex;
     flex-direction: column;
+    gap: 20px;
+    width: 100%;
+    align-items: center;
 }
-.qr-zone {
-    height: 40vh;
-    min-height: 200px;
-    flex-shrink: 0;
-    display: flex; align-items: center; justify-content: center;
-    padding: 16px;
-}
-.qr-frame {
-    background: rgba(10, 9, 8, 0.95);
-    border: 2px solid rgba(60, 50, 45, 0.5);
-    box-shadow: 0 0 30px rgba(0,0,0,0.9);
-    width: 100%; height: 100%;
-    max-width: 260px; max-height: 260px;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer;
-}
-.input-zone {
-    flex: 1;
-    padding: 20px;
-    display: flex; flex-direction: column;
-    gap: 16px;
-    justify-content: center;
-}
-
-/* --- Buttons --- */
-.btn-retro {
-    background: linear-gradient(180deg, #2a2724 0%, #1a1816 100%);
-    border: 1px solid #3d3530;
-    box-shadow: 0 4px 0 #0a0908;
-    color: #ddd; padding: 14px 24px; border-radius: 4px;
-    font-family: 'Orbitron', sans-serif;
-    font-weight: 700; text-transform: uppercase;
-    cursor: pointer; transition: transform 0.1s; letter-spacing: 1px;
-}
-.btn-retro:active { transform: translateY(2px); box-shadow: 0 2px 0 #0a0908; }
-.btn-create { background: linear-gradient(180deg, #FF7F00 0%, #CC5500 100%); border-color: #FF6200; color: #fff; }
-.btn-scan { background: linear-gradient(180deg, #00FF9D 0%, #00CC7D 100%); border-color: #00FF9D; color: #000; }
-.secondary { background: #222; color: #888; border-color: #444; }
-
-/* --- Inputs --- */
-.text-input {
-    background: rgba(8, 7, 6, 0.9);
-    border: 2px solid rgba(60, 50, 45, 0.5);
-    color: #fff; padding: 16px;
-    border-radius: 4px; outline: none; resize: none;
-    transition: border-color 0.2s;
-    font-family: 'Share Tech Mono', monospace;
-}
-.text-input:focus { border-color: var(--primary-orange); }
-
-/* --- Overlays --- */
-.overlay {
-    position: absolute; inset: 0; z-index: 500;
-    background: #0a0908;
-    display: none; flex-direction: column;
-}
-.menu-style { z-index: 600; background: rgba(10,9,8,0.98); padding: 24px; }
-.menu-header { font-family: 'Orbitron'; font-size: 24px; color: var(--primary-orange); margin-bottom: 32px; text-align: center; }
-.menu-item { padding: 14px; border-bottom: 1px solid #333; cursor: pointer; }
-.menu-close { position: absolute; top: 16px; right: 16px; font-size: 24px; cursor: pointer; opacity: 0.6; }
-
-/* --- Scanner --- */
-.scan-viewport { flex: 1; position: relative; overflow: hidden; background: #000; }
-#video-feed { width: 100%; height: 100%; object-fit: cover; }
-#freeze-frame { position: absolute; width: 100%; height: 100%; object-fit: contain; display: none; }
-
-.viewfinder-box {
-    position: absolute; top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    width: 70%; padding-bottom: 70%;
-    pointer-events: none;
-}
-.corner { position: absolute; width: 30px; height: 30px; border-color: rgba(255,255,255,0.5); }
-.tl { top: 0; left: 0; border-top: 4px solid; border-left: 4px solid; }
-.tr { top: 0; right: 0; border-top: 4px solid; border-right: 4px solid; }
-.bl { bottom: 0; left: 0; border-bottom: 4px solid; border-left: 4px solid; }
-.br { bottom: 0; right: 0; border-bottom: 4px solid; border-right: 4px solid; }
-.viewfinder-box.locked .corner { border-color: var(--primary-green); box-shadow: 0 0 15px var(--primary-green); }
-
-.flash-fx { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
-.flash-fx.active { opacity: 0.8; }
-
-.scan-panel { background: rgba(10, 9, 8, 0.95); padding: 16px; border-top: 1px solid #333; }
-.scan-results-container { display: flex; flex-direction: column; gap: 12px; }
-.scan-result-item { background: #111; border: 1px solid #333; border-radius: 4px; padding: 12px; }
-.scan-result-label { font-family: 'Orbitron'; font-size: 12px; margin-bottom: 4px; }
-.scan-result-label.red { color: #FF004D; }
-.scan-result-label.green { color: #00FF41; }
-.scan-result-label.blue { color: #0088FF; }
-.scan-result-content { font-size: 14px; word-break: break-all; }
-
-/* --- Utility --- */
-.hidden { display: none !important; }
