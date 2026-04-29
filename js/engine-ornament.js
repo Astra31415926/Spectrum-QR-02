@@ -1,7 +1,6 @@
-/* js/engine-ornament.js */
+/* === js/engine-ornament.js === */
 
 const OrnamentEngine = (function() {
-    
     const SPRITE_LIB = [
         [73,42,28,127,28,42,73], [127,65,93,85,93,65,127], [85,62,99,42,99,62,85],
         [42,119,34,73,34,119,42], [28,42,73,119,73,42,28], [0,62,34,42,46,32,63],
@@ -26,11 +25,7 @@ const OrnamentEngine = (function() {
     ];
 
     let seed = Date.now();
-
-    function seededRandom() {
-        let x = Math.sin(seed++) * 10000;
-        return x - Math.floor(x);
-    }
+    function seededRandom() { let x = Math.sin(seed++) * 10000; return x - Math.floor(x); }
 
     function buildGrid(size) {
         const grid = Array(size).fill(0).map(() => Array(size).fill(0));
@@ -88,9 +83,7 @@ const OrnamentEngine = (function() {
             const canvas = document.getElementById('canvas-ornament');
             const ctx = canvas.getContext('2d');
             
-            if(!text) {
-                ctx.fillStyle="#000"; ctx.fillRect(0,0,512,512); return;
-            }
+            if(!text) { ctx.fillStyle="#000"; ctx.fillRect(0,0,512,512); return; }
             
             try {
                 const qr = qrcode(0, 'M');
@@ -123,8 +116,7 @@ const OrnamentEngine = (function() {
                     }
                 }
                 ctx.globalCompositeOperation = "source-over";
-
-            } catch(e) { console.error(e); }
+            } catch(e) {}
         }
     };
 })();
