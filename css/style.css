@@ -1,28 +1,20 @@
 /* === css/style.css === */
-
-/* Импорт шрифта Orbitron */
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
 
 :root {
-    --brass-color: #B5A642;      /* Цвет латуни */
+    --brass-color: #B5A642;
     --brass-dark: #8a7d2a;
     --bg-color: #000000;
     --text-color: #ffffff;
 }
 
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-    -webkit-tap-highlight-color: transparent;
-}
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
     background-color: var(--bg-color);
     color: var(--text-color);
-    font-family: 'Orbitron', sans-serif; /* Основной шрифт */
+    font-family: 'Orbitron', sans-serif;
     height: 100vh;
-    width: 100%;
     overflow: hidden;
 }
 
@@ -30,10 +22,8 @@ body {
     height: 100%;
     display: flex;
     flex-direction: column;
-    position: relative;
 }
 
-/* --- Логика экранов --- */
 .screen {
     display: none; /* По умолчанию скрыты */
     flex-direction: column;
@@ -42,56 +32,90 @@ body {
 }
 
 .screen.active {
-    display: block; /* Активный экран показан */
+    display: block; /* Показываем активный */
 }
 
-/* --- Кнопки btn-retro --- */
+.nav-bar {
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    border-bottom: 1px solid #333;
+    background: #000;
+}
+
+.app-title {
+    font-size: 18px;
+    font-weight: 900;
+    letter-spacing: 1px;
+}
+
+.bottom-nav {
+    height: 70px;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    background: #000;
+    border-top: 1px solid #333;
+}
+
+.nav-btn { display: flex; flex-direction: column; align-items: center; font-size: 10px; color: #888; cursor: pointer; }
+.nav-btn:active { color: var(--brass-color); }
+.nav-icon { width: 24px; height: 24px; margin-bottom: 4px; }
+
 .btn-retro {
     background: transparent;
-    border: 2px solid var(--brass-color); /* Рамка цвета латуни */
+    border: 2px solid var(--brass-color);
     color: var(--brass-color);
     font-family: 'Orbitron', sans-serif;
     font-weight: 700;
-    font-size: 18px;
-    padding: 15px 20px; /* Большие, без лишних отступов */
+    font-size: 16px;
+    padding: 15px 20px;
     cursor: pointer;
     text-transform: uppercase;
-    transition: all 0.3s ease;
+    transition: all 0.2s;
+}
+
+.btn-retro:active { background: var(--brass-color); color: #000; }
+.btn-retro:disabled { border-color: #333; color: #333; pointer-events: none; }
+
+.btn-create { background: var(--brass-color); color: #000; }
+.btn-scan { border-color: #fff; color: #fff; }
+.secondary { border-color: #444; color: #888; }
+
+.center-box { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; gap: 20px; text-align: center; }
+.w-full { width: 100%; max-width: 300px; }
+.btn-group { display: flex; flex-direction: column; gap: 20px; width: 100%; align-items: center; }
+.btn-group-vertical { display: flex; flex-direction: column; gap: 15px; width: 100%; align-items: center; margin-top: 20px; }
+
+.gen-layout { flex: 1; display: flex; flex-direction: column; height: 100%; }
+.qr-zone { height: 40vh; display: flex; align-items: center; justify-content: center; padding: 16px; }
+.qr-frame { width: 100%; height: 100%; max-width: 260px; max-height: 260px; border: 2px solid #333; cursor: pointer; }
+.input-zone { flex: 1; display: flex; flex-direction: column; gap: 12px; padding: 20px; justify-content: center; }
+
+.text-input {
+    background: #111;
+    border: 1px solid #333;
+    color: #fff;
+    padding: 12px;
+    border-radius: 4px;
     outline: none;
+    resize: none;
+    font-family: 'Share Tech Mono', monospace;
 }
 
-.btn-retro:active {
-    background: var(--brass-color);
-    color: #000;
+.screen-title { font-size: 20px; color: var(--brass-color); margin-bottom: 10px; }
+.scan-result-box { 
+    width: 100%; 
+    min-height: 60px; 
+    background: #111; 
+    border: 1px solid var(--brass-color); 
+    padding: 15px; 
+    color: #0f0; 
+    word-break: break-all; 
+    font-family: monospace;
 }
 
-.btn-retro:disabled {
-    border-color: #333;
-    color: #333;
-    pointer-events: none;
-}
-
-/* Центровка контента на главном экране */
-.center-box {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-    gap: 20px;
-    text-align: center;
-}
-
-.w-full {
-    width: 100%;
-    max-width: 300px;
-}
-
-.btn-group {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    width: 100%;
-    align-items: center;
-}
+.overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 100; display: none; padding: 40px; }
+.hidden { display: none !important; }
