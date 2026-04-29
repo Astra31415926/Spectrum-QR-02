@@ -1,34 +1,41 @@
-/* Mobile Ergonomics */
+/* === css/mobile.css === */
 
-/* 1. Prevent auto-zoom on input focus */
-.text-input {
-    font-size: 16px;
-}
+@media (max-width: 768px) {
+    
+    /* Поля ввода строго друг под другом */
+    .input-zone {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        padding: 20px;
+    }
 
-/* 2. Generator Mode: Hide Bottom Nav completely to save space */
-/* Triggered by JS adding class to body or app container */
-.generator-active .bottom-nav {
-    display: none;
-}
+    /* ГЛАВНОЕ: Скрытие нижнего меню в режиме генерации */
+    /* Используем селектор :has() (поддерживается современными мобильными браузерами) */
+    /* Если браузер старый, можно добавить класс .no-menu к body через JS, но этот CSS решает задачу элегантно */
+    #app:has(#scr-gen-ornament.active) #bottom-nav,
+    #app:has(#scr-gen-3d.active) #bottom-nav {
+        display: none !important;
+    }
 
-/* 3. 3D Mode Input Fix: Keep Blue channel visible */
-/* We use column-reverse so Blue is visually at the top when keyboard opens at bottom */
-@media (max-width: 600px) {
-    #scr-gen-3d .input-zone {
-        flex-direction: column-reverse; 
-        /* R, G, B go bottom-to-top visually: B(top), G, R(bottom) */
-        /* Keyboard covers bottom -> R and G might be covered, B stays safe at top */
+    /* Размер шрифта 16px для предотвращения автозума */
+    .text-input {
+        font-size: 16px;
+        padding: 12px;
+        border: 1px solid #333;
+        background: #111;
+        color: #fff;
+        width: 100%;
     }
     
-    /* Adjust QR zone height to be smaller if needed */
+    /* Дополнительные удобства для мобильных */
     .qr-zone {
         height: 35vh;
         min-height: 180px;
     }
-}
 
-/* General Mobile adjustments */
-@media (max-width: 400px) {
-    .app-title { font-size: 16px; letter-spacing: 0; }
-    .btn-retro { padding: 12px 16px; font-size: 12px; }
+    .btn-retro {
+        padding: 12px 15px;
+        font-size: 16px;
+    }
 }
