@@ -15,34 +15,41 @@ body {
     color: var(--text-color);
     font-family: 'Orbitron', sans-serif;
     height: 100vh;
-    overflow: hidden;
+    overflow: hidden; /* Блокируем скролл body */
 }
 
 #app {
     height: 100%;
     display: flex;
     flex-direction: column;
+    position: relative;
 }
 
 .screen {
-    display: none; /* По умолчанию скрыты */
+    display: none;
     flex-direction: column;
     height: 100%;
     width: 100%;
+    /* Добавляем скролл внутри экрана, если контент не влезает */
+    overflow-y: auto; 
+    background: #000;
 }
 
 .screen.active {
-    display: block; /* Показываем активный */
+    display: flex; /* Используем flex для правильного распределения места */
 }
 
+/* --- Шапка и меню --- */
 .nav-bar {
     height: 60px;
+    min-height: 60px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 0 16px;
     border-bottom: 1px solid #333;
     background: #000;
+    z-index: 10;
 }
 
 .app-title {
@@ -53,6 +60,7 @@ body {
 
 .bottom-nav {
     height: 70px;
+    min-height: 70px;
     display: flex;
     justify-content: space-around;
     align-items: center;
@@ -64,6 +72,7 @@ body {
 .nav-btn:active { color: var(--brass-color); }
 .nav-icon { width: 24px; height: 24px; margin-bottom: 4px; }
 
+/* --- Кнопки --- */
 .btn-retro {
     background: transparent;
     border: 2px solid var(--brass-color);
@@ -89,20 +98,63 @@ body {
 .btn-group { display: flex; flex-direction: column; gap: 20px; width: 100%; align-items: center; }
 .btn-group-vertical { display: flex; flex-direction: column; gap: 15px; width: 100%; align-items: center; margin-top: 20px; }
 
-.gen-layout { flex: 1; display: flex; flex-direction: column; height: 100%; }
-.qr-zone { height: 40vh; display: flex; align-items: center; justify-content: center; padding: 16px; }
-.qr-frame { width: 100%; height: 100%; max-width: 260px; max-height: 260px; border: 2px solid #333; cursor: pointer; }
-.input-zone { flex: 1; display: flex; flex-direction: column; gap: 12px; padding: 20px; justify-content: center; }
+/* --- Генератор (ИСПРАВЛЕНО) --- */
+.gen-layout {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+}
+
+/* Зона QR кода - фиксированная высота сверху */
+.qr-zone {
+    flex: 0 0 auto; /* Не растягивается, не сжимается */
+    height: 40vh; /* 40% от высоты */
+    max-height: 300px;
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    border-bottom: 1px solid #222; /* Визуальный разделитель */
+}
+
+.qr-frame {
+    background: #111;
+    width: 100%;
+    height: 100%;
+    max-width: 256px;
+    max-height: 256px;
+    border: 2px solid #333;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Зона ввода - занимает оставшееся место, скроллится если нужно */
+.input-zone {
+    flex: 1 1 auto; /* Занимает всё оставшееся место */
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 24px;
+    justify-content: flex-start; /* Контент сверху */
+    align-items: center;
+}
 
 .text-input {
     background: #111;
     border: 1px solid #333;
     color: #fff;
-    padding: 12px;
+    padding: 16px;
     border-radius: 4px;
     outline: none;
     resize: none;
     font-family: 'Share Tech Mono', monospace;
+    font-size: 16px; /* Чтобы не зумился на мобиле */
+    width: 100%;
+    max-width: 300px;
 }
 
 .screen-title { font-size: 20px; color: var(--brass-color); margin-bottom: 10px; }
@@ -115,6 +167,7 @@ body {
     color: #0f0; 
     word-break: break-all; 
     font-family: monospace;
+    font-size: 14px;
 }
 
 .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 100; display: none; padding: 40px; }
